@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import type { ChangeEvent, FormEvent } from "react";
 import emailjs from "@emailjs/browser";
 
@@ -27,6 +27,7 @@ export default function Contact() {
   const [error, setError] = useState<string>("");
   const [success, setSuccess] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(false);
+  const isSubmittingRef = useRef(false);
 
   const changeHandler = (
     e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
@@ -71,23 +72,34 @@ export default function Contact() {
     e: FormEvent<HTMLFormElement>,
   ): Promise<void> => {
     e.preventDefault();
-    if (loading) return;
 
-    setError("");
-    setSuccess(false);
-
-    const isValid = validateForm();
-    if (!isValid) return;
-
-    if (!SERVICE_KEY || !TEMPLATE_KEY || !PUBLIC_KEY) {
-      setError("Email service is currently unavailable. Please try again later.");
-      return;
-    }
-
-    setLoading(true);
+    // 1. TRUE synchronous lock: absolute first priority to block rapid clicks/spam
+    if (isSubmittingRef.current) return;
+    isSubmittingRef.current = true;
 
     try {
-      await emailjs.send(
+      // 2. Clear state BEFORE any async gaps to prevent stale UI
+      setError("");
+      setSuccess(false);
+
+      if (!validateForm()) return;
+
+      // 3. Graceful env var handling for dev/demo
+      if (!SERVICE_KEY || !TEMPLATE_KEY || !PUBLIC_KEY) {
+        if (import.meta.env.DEV) {
+          setLoading(true);
+          await new Promise((resolve) => setTimeout(resolve, 1000));
+          setSuccess(true);
+          setFormData(INITIAL_FORM_DATA);
+          return;
+        }
+        setError("Email service is currently unavailable. Please try again later.");
+        return;
+      }
+
+      setLoading(true);
+
+      const response = await emailjs.send(
         SERVICE_KEY,
         TEMPLATE_KEY,
         {
@@ -99,13 +111,20 @@ export default function Contact() {
         PUBLIC_KEY,
       );
 
-      setSuccess(true);
-      setFormData(INITIAL_FORM_DATA);
+      // 4. Improved response validation
+      if (response && (response.status === 200 || response.text === "OK")) {
+        setSuccess(true);
+        setFormData(INITIAL_FORM_DATA);
+      } else {
+        setError("✕ Failed to send message. Please try again.");
+      }
     } catch (err: unknown) {
       console.error("EmailJS Error:", err);
       setError("✕ Failed to send message. Please check your connection.");
     } finally {
+      // 5. Release BOTH the lock and the loading state in all scenarios
       setLoading(false);
+      isSubmittingRef.current = false;
     }
   };
 
