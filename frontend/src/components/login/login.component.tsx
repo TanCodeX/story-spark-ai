@@ -10,7 +10,7 @@ import { storeUserInfo, getUserInfo } from "../../services/auth.service";
 import { USER_ROLE } from "../../constants/role";
 import RedirectComponent from "../redirect.component";
 import toast, { Toaster } from "react-hot-toast";
-import { GoogleLogin } from "@react-oauth/google";
+import { GoogleLogin, CredentialResponse } from "@react-oauth/google";
 
 type Inputs = {
   email: string;
@@ -53,7 +53,7 @@ const LoginComponent = () => {
   };
 
   const handleGoogleLoginSuccess = async (
-    credentialResponse: any
+    credentialResponse: CredentialResponse
   ) => {
     setIsBusy(true);
 
@@ -180,7 +180,8 @@ const LoginComponent = () => {
 
           </div>
 
-          <div className="mt-6 flex justify-center">
+          {/* Explicitly added list-none to prevent stray bullet point artifact on production build */}
+          <div className="mt-6 flex justify-center list-none">
             <GoogleLogin
               onSuccess={handleGoogleLoginSuccess}
               onError={handleGoogleLoginError}
