@@ -419,10 +419,11 @@ const StoriesComponent = () => {
       return;
     }
 
-    if (data.prompt === "") {
+    if (!data.prompt.trim()) {
       toast.error("Please enter a prompt to generate a story.");
       return;
     }
+
     if (getWordCount(data.prompt) < 10) {
       toast.error(
         "Please enter a prompt with at least 10 words to generate a story.",
