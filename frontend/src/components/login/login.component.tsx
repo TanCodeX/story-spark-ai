@@ -129,7 +129,7 @@ const LoginComponent = () => {
 
             <button
             onClick={() => window.location.href = "/"}
-            className="mb-4 text-sm text-blue-400 hover:text-blue-300 transition-colors duration-200 flex items-center gap-2"
+            className="mb-4 text-sm font-semibold text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 underline hover:underline transition-colors duration-200 flex items-center gap-2 cursor-pointer"
                       >
             ← Back to Home
             </button>
