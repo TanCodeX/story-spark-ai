@@ -23,11 +23,12 @@ type AuthUserInfo = {
   subscriptionType: string;
   exp: number;
   iat: number;
+  avatar?: string;
 };
 
 const buildUserInfo = (decodedData: any): AuthUserInfo => ({
   email: decodedData.email || "",
-  userId: decodedData.userId || "",
+  userId: decodedData.userId || decodedData._id || "",
   name: decodedData.name || "",
   postsCount: decodedData.postsCount || 0,
   role: decodedData.role || "guest",

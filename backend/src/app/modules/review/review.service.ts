@@ -1,5 +1,11 @@
+import { ITokenPayload } from "../../../interfaces/token";
 import { IReviewPayload } from "./review.interface";
 import { Review } from "./review.model";
+const createReview = async (payload: IReviewPayload, token: ITokenPayload) => {
+  const result = await Review.create({
+    ...payload,
+    userId: token._id,
+  });
 import redis from "../../utils/redis.client";
 
 const PUBLISHED_REVIEWS_KEY = "reviews:published:v1";
@@ -17,7 +23,6 @@ const createReview = async (payload: IReviewPayload) => {
 
   return result;
 };
-
 const getPublishedReviews = async () => {
   // Try cache first
   try {
@@ -43,15 +48,12 @@ const getPublishedReviews = async () => {
 
   return result;
 };
-
 const getPendingReviews = async () => {
   const result = await Review.find({
     isPublished: false,
   }).sort({ createdAt: -1 });
-
   return result;
 };
-
 const approveReview = async (id: string) => {
   const result = await Review.findByIdAndUpdate(
     id,
@@ -72,7 +74,6 @@ const approveReview = async (id: string) => {
 
   return result;
 };
-
 export const ReviewService = {
   createReview,
   getPublishedReviews,
