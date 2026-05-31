@@ -43,7 +43,10 @@ const createComment = async (
 };
 
 const getCommentsByPostId = async (postId: string) => {
-main
+  const comments = await Comment.find({ postId: new Types.ObjectId(postId) })
+    .populate("userId", "name email")
+    .sort({ createdAt: -1 });
+  return comments;
 };
 
 const toggleCommentLike = async (commentId: string, token: ITokenPayload) => {
