@@ -129,10 +129,10 @@ const router = createBrowserRouter([
 
   // Isolated layout branches (Bypassing public navigation headers entirely)
   { path: "/auth/email-validation", element: <EmailValidationComponent /> },
-  { path: "/payment", element: <PaymentComponent /> },
+  { path: "/payment", element: <ProtectedRoute allowedRoles={ALL_ROLES} element={<PaymentComponent />} /> },
 
-  { path: "/collab", element: <CollabHome /> },
-  { path: "/collab/:roomId", element: <CollabRoom /> },
+  { path: "/collab", element: <ProtectedRoute allowedRoles={ALL_ROLES} element={<CollabHome />} /> },
+  { path: "/collab/:roomId", element: <ProtectedRoute allowedRoles={ALL_ROLES} element={<CollabRoom />} /> },
 
   // Administrative Dashboard Infrastructure Tree
   {
