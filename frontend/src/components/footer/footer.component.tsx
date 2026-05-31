@@ -54,11 +54,11 @@ const FooterComponent = () => {
   const resourceLinks = [
     { label: "Blog",         to: "/blog"        },
     { label: "Help Center",  to: "/help"        },
-    { label: "Community",    to: "/community"   },
+    // ─── FIXED: Changed from "/community" to match the secure dashboard sub-route ───
+    { label: "Community",    to: "/dashboard/community" },
     { label: "Contributors", to: "/contributors"},
     { label: "Report Bug",   to: githubIssuesUrl },
   ];
-
 
   const legalLinks = [
     { label: "Privacy", to: "/privacy-policy" },
@@ -257,21 +257,21 @@ const FooterComponent = () => {
           </div>
           <div className="flex items-center gap-2.5">
             {legalLinks.map(({ label, to }, i) => (
-  <span key={label}>
-    <Link to={to}>
-      {label}
-    </Link>
+              <span key={label}>
+                <Link to={to}>
+                  {label}
+                </Link>
 
-    {i < legalLinks.length - 1 && (
-      <span className="text-white/[0.12]">|</span>
-    )}
-  </span>
-))}
+                {i < legalLinks.length - 1 && (
+                  <span className="text-white/[0.12]">|</span>
+                )}
+              </span>
+            ))}
           </div>
 
         </div>
-        </div>
-</footer>
+      </div>
+    </footer>
   );
 };
 
