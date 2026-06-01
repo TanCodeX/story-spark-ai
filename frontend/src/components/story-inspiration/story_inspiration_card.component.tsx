@@ -1,7 +1,12 @@
 
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
+import gsap from "gsap";
+import { useGSAP } from "@gsap/react";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
+
+gsap.registerPlugin(ScrollTrigger);
 
 export interface StoryInspiration {
   id: string;
@@ -94,6 +99,24 @@ const StoryInspirationCard: React.FC<
       icon: "fas fa-book",
     };
 
+  const cardRef = useRef<HTMLDivElement>(null);
+
+  useGSAP(() => {
+    if (!cardRef.current) return;
+    
+    gsap.from(cardRef.current, {
+      y: 50,
+      opacity: 0,
+      duration: 0.8,
+      ease: "power3.out",
+      scrollTrigger: {
+        trigger: cardRef.current,
+        start: "top 85%",
+        toggleActions: "play none none none",
+      },
+    });
+  }, []);
+
   const handleGenerateSimilar = () => {
     const selectedPrompt =
       prompts[selectedPromptIdx];
@@ -114,11 +137,13 @@ const StoryInspirationCard: React.FC<
   };
 
   return (
-    <motion.div
-      whileHover={{ y: -8 }}
-      transition={{ duration: 0.35 }}
-      className="
-        group relative overflow-hidden
+    <div ref={cardRef} className="h-full">
+      <motion.div
+        whileHover={{ y: -8 }}
+        transition={{ duration: 0.35 }}
+        className="
+          h-full
+          group relative overflow-hidden
         rounded-[32px]
         bg-white
         border border-slate-200/70
@@ -371,7 +396,8 @@ const StoryInspirationCard: React.FC<
           />
         </button>
       </div>
-    </motion.div>
+      </motion.div>
+    </div>
   );
 };
 
