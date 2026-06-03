@@ -267,6 +267,50 @@ const aiFreeModelChat = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const aiStoryContinuation = catchAsync(async (req: Request, res: Response) => {
+  const payload = req.body as { prompt: string; language?: string };
+  const guard = res.locals.quotaRefundGuard;
+
+  if (!guard) {
+    throw new ApiError(
+      httpStatus.INTERNAL_SERVER_ERROR,
+      "Quota guard missing — checkRequestLimit middleware required"
+    );
+  }
+
+  await runWithQuotaCleanup(guard, async () => {
+    const result = await AiModelService.aiModelStoryContinuation(payload);
+    sendResponse(res, {
+      statusCode: httpStatus.OK,
+      success: true,
+      message: "Story continuation generated successfully!",
+      data: result,
+    });
+  });
+});
+
+const aiFreeStoryContinuation = catchAsync(async (req: Request, res: Response) => {
+  const payload = req.body as { prompt: string; language?: string };
+  let userId = req.cookies.userId as string | undefined;
+
+  if (!userId) {
+    userId = Math.random().toString(36).substring(7);
+    setGuestUserIdCookie(res, userId);
+  }
+
+  const guard = createGuestQuotaGuard(userId);
+  await runWithQuotaCleanup(guard, async () => {
+    await reserveGuestQuota(userId);
+    const result = await AiModelService.aiFreeStoryContinuation(payload);
+    sendResponse(res, {
+      statusCode: httpStatus.OK,
+      success: true,
+      message: "Story continuation generated successfully!",
+      data: result,
+    });
+  });
+});
+
 export const AiModelController = {
   aiModelGenerate,
   aiFreeModelGenerate,
@@ -277,6 +321,8 @@ export const AiModelController = {
   aiFreeModelRemix,
   aiModelTranslate,
   aiFreeModelTranslate,
+  aiStoryContinuation,
+  aiFreeStoryContinuation,
   aiModelChat,
   aiFreeModelChat,
 };

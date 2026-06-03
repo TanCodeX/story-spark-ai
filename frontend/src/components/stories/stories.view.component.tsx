@@ -22,6 +22,7 @@ import StoryGeneratingAnimation from "../loading/story-generating-animation.comp
 import StoryRemix from "../remix/StoryRemix";
 import StoryWorldMap from "../story-map/StoryWorldMap";
 import StoryVisualizer from "../story-visualizer/StoryVisualizer";
+import ContinueStoryModal from "./ContinueStoryModal";
 
 export class ApiError extends Error {
   constructor(public readonly status: number, message: string) {
@@ -443,6 +444,7 @@ const StoriesViewComponent: React.FC<StoriesComponentProps> = ({
   const [newTopicTitle, setNewTopicTitle] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(false);
   const [isCopied, setIsCopied] = useState<boolean>(false);
+  const [showContinueModal, setShowContinueModal] = useState<boolean>(false);
   const [showWorldMap, setShowWorldMap] = useState<boolean>(false);
   const [showRemix, setShowRemix] = useState<boolean>(false);
   const [showTranslator, setShowTranslator] = useState<boolean>(false);
@@ -1677,6 +1679,10 @@ if (isLoading) {
                 </button>
                 <button type="button" className="rounded-xl px-3 py-2 bg-slate-50 text-slate-600 hover:bg-slate-100 dark:bg-white/5 dark:text-slate-300 dark:hover:bg-white/10 border border-slate-200/60 dark:border-transparent text-xs font-bold uppercase tracking-wider transition-all duration-150 active:scale-[0.98] cursor-pointer" onClick={() => setShowTranslator(true)} disabled={!selectedStory}>
                   🌍 Translate
+                </button>
+                <button type="button" id="continue-story-btn" className="rounded-xl px-3 py-2 bg-gradient-to-r from-indigo-500 to-violet-500 hover:from-indigo-400 hover:to-violet-400 text-white border border-transparent text-xs font-bold uppercase tracking-wider transition-all duration-150 active:scale-[0.98] cursor-pointer disabled:opacity-50 shadow-sm" onClick={() => setShowContinueModal(true)} disabled={!selectedStory}>
+                  ✦ Continue →
+                </button>
 
           <div className="bg-slate-800/80 backdrop-blur-xl border border-slate-700/50 p-8 rounded-2xl shadow-2xl relative overflow-hidden">
             <div className="absolute top-[-50px] right-[-50px] w-48 h-48 bg-blue-500/10 rounded-full blur-3xl pointer-events-none"></div>
@@ -2376,6 +2382,17 @@ if (isLoading) {
           scenes={storyboardScenes}
           styleGuide={storyboardStyleGuide}
           onClose={() => setShowStoryVisualizer(false)}
+        />
+      )}
+
+      {showContinueModal && selectedStory && (
+        <ContinueStoryModal
+          story={{
+            title: selectedStory.title,
+            content: selectedStory.content,
+            language: selectedStory.language ?? "English",
+          }}
+          onClose={() => setShowContinueModal(false)}
         />
       )}
 

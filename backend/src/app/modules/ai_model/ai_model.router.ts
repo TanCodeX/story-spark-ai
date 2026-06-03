@@ -98,6 +98,26 @@ router.post(
   AiModelController.aiFreeModelTranslate
 );
 
+// ========== STORY CONTINUATION ==========
+
+// Continue Story - PROTECTED
+router.post(
+  "/continue-story",
+  aiGenerationRateLimiter,
+  auth(),
+  validateRequest(AIModelValidator.aiStoryContinuation),
+  checkRequestLimit(),
+  AiModelController.aiStoryContinuation
+);
+
+// Continue Story Free - PUBLIC
+router.post(
+  "/continue-story-free",
+  validateRequest(AIModelValidator.aiStoryContinuation),
+  freeAiRateLimiter,
+  AiModelController.aiFreeStoryContinuation
+);
+
 // ========== AI CHAT ==========
 
 // AI Chat - PROTECTED
