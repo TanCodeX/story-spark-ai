@@ -82,6 +82,35 @@ const StoriesViewComponent: React.FC<StoriesComponentProps> = ({
     }
   };
 
+  const handleDownloadStory = () => {
+    if (!selectedStory) {
+      toast.error("No story available to download.");
+      return;
+    }
+
+    const content = `Title: ${selectedStory.title}\n\n${selectedStory.content}`;
+
+    const blob = new Blob([content], { type: "text/plain;charset=utf-8" });
+
+    const url = window.URL.createObjectURL(blob);
+
+    const link = document.createElement("a");
+    link.href = url;
+
+    const safeTitle =
+      selectedStory.title?.replace(/[^a-zA-Z0-9]/g, "_") || "story";
+
+    link.download = `${safeTitle}.txt`;
+
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    window.URL.revokeObjectURL(url);
+
+    toast.success("Story downloaded successfully!");
+  };
+
   return (
     <div className="mt-16 px-4 sm:px-6 md:px-10 pb-10">
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
@@ -98,11 +127,10 @@ const StoriesViewComponent: React.FC<StoriesComponentProps> = ({
                   stories.map((story) => (
                     <button
                       key={story.uuid}
-                      className={`relative w-16 h-16 rounded-full border-2 ${
-                        selectedStory?.uuid === story.uuid
-                          ? "border-blue-500 scale-110"
-                          : "border-white"
-                      } hover:scale-110 transition-transform duration-200 ease-in-out focus:outline-none focus:ring-1 focus:ring-offset-2 focus:ring-fuchsia-600`}
+                      className={`relative w-16 h-16 rounded-full border-2 ${selectedStory?.uuid === story.uuid
+                        ? "border-blue-500 scale-110"
+                        : "border-white"
+                        } hover:scale-110 transition-transform duration-200 ease-in-out focus:outline-none focus:ring-1 focus:ring-offset-2 focus:ring-fuchsia-600`}
                       onClick={() => handelStorySelection(story)}
                     >
                       <img
@@ -126,18 +154,24 @@ const StoriesViewComponent: React.FC<StoriesComponentProps> = ({
               <h3 className="text-xl font-semibold text-gray-300">
                 Generated Story
               </h3>
-              <span className="text-sm text-gray-800">
+              <div className="flex gap-2">
                 <button
-                  className={`rounded-lg px-4 py-1 font-semibold flex items-center space-x-2 cursor-pointer bg-gradient-to-r from-blue-600 to-purple-600 text-gray-300 ${
-                    loading
-                      ? "opacity-50 cursor-not-allowed"
-                      : "hover:shadow-lg hover:shadow-indigo-500/50"
-                  }`}
+                  className={`rounded-lg px-4 py-1 font-semibold flex items-center space-x-2 cursor-pointer bg-gradient-to-r from-blue-600 to-purple-600 text-gray-300 ${loading
+                    ? "opacity-50 cursor-not-allowed"
+                    : "hover:shadow-lg hover:shadow-indigo-500/50"
+                    }`}
                   onClick={handelPublishStory}
                 >
                   {loading ? "Publishing..." : "Publish"}
                 </button>
-              </span>
+                <button
+                  onClick={handleDownloadStory}
+                  disabled={!selectedStory}
+                  className="rounded-lg px-4 py-1 font-semibold cursor-pointer bg-gradient-to-r from-green-600 to-emerald-600 text-gray-300 hover:shadow-lg"
+                >
+                  Download
+                </button>
+              </div>
             </div>
             <div className="prose max-w-none text-gray-400">
               {selectedStory ? (
