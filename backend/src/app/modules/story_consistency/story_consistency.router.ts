@@ -17,4 +17,16 @@ router.post(
   StoryConsistencyController.analyze
 );
 
-export const StoryConsistencyRouter = router;
+router.post(
+  "/track-facts",
+  freeAiRateLimiter,
+  StoryConsistencyController.trackFacts
+);
+
+router.post(
+  "/track-facts-auth",
+  auth(),
+  StoryConsistencyController.trackFacts
+);
+
+export const StoryConsistencyRouter = router;
