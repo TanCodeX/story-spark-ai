@@ -79,7 +79,7 @@ const ExploreViewListComponent: React.FC<IExploreViewListComponentProps> = ({
               onClick={() => navigate(`/post/${story._id}`)}
               className="cursor-pointer bg-gray-50 text-slate-900 backdrop-blur-xl border border-gray-200 rounded-3xl shadow-lg hover:shadow-2xl hover:shadow-blue-500/10 hover:-translate-y-2 transition-all duration-300 overflow-hidden group flex flex-col h-full dark:bg-slate-900/60 dark:text-white dark:border-slate-800"
             >
-              <div className="relative overflow-hidden bg-slate-200 dark:bg-slate-800">
+              <div className="relative overflow-hidden bg-slate-200 dark:bg-slate-800 h-52">
                 {!imageErrors[story._id] && story.imageURL ? (
                   <ImageFallback
                     src={story.imageURL}
@@ -133,7 +133,7 @@ const ExploreViewListComponent: React.FC<IExploreViewListComponentProps> = ({
               </div>
 
               <div className="px-6 py-5 flex-1 flex flex-col relative z-10">
-                <h3 className="font-extrabold text-xl mb-3 text-slate-900 group-hover:text-indigo-600 transition-colors line-clamp-2 dark:text-white dark:group-hover:text-indigo-400">
+                <h3 className="font-extrabold text-xl mb-3 text-slate-900 group-hover:text-indigo-600 transition-colors line-clamp-2 break-words overflow-hidden text-ellipsis dark:text-white dark:group-hover:text-indigo-400">
                   {story.title}
                 </h3>
 
