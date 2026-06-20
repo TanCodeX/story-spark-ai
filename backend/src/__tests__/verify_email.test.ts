@@ -1,11 +1,11 @@
 import { VerifyEmailService } from "../app/modules/verify_email/verify_email.service";
 import { OTPModel } from "../app/modules/verify_email/otp.model";
 import nodemailer from "nodemailer";
-import config from "../../config";
-import ApiError from "../../errors/api_error";
+import config from "../config";
+import ApiError from "../errors/api_error";
 import httpStatus from "http-status";
 
-jest.mock("../../config", () => ({
+jest.mock("../config", () => ({
   verify_email: "test@example.com",
   verify_password: "testpassword",
 }));
