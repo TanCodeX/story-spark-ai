@@ -190,10 +190,44 @@ const deleteComment = async (commentId: string, token: ITokenPayload) => {
   return { message: "Comment deleted successfully!" };
 };
 
+const hideComment = async (commentId: string) => {
+  const comment = await Comment.findByIdAndUpdate(
+    commentId,
+    {
+      isHidden: true,
+    },
+    { new: true }
+  );
+
+  if (!comment) {
+    throw new ApiError(httpStatus.NOT_FOUND, "Comment not found!");
+  }
+
+  return comment;
+};
+
+const restoreComment = async (commentId: string) => {
+  const comment = await Comment.findByIdAndUpdate(
+    commentId,
+    {
+      isHidden: false,
+    },
+    { new: true }
+  );
+
+  if (!comment) {
+    throw new ApiError(httpStatus.NOT_FOUND, "Comment not found!");
+  }
+
+  return comment;
+};
+
 export const CommentService = {
   createComment,
   getCommentsByPostId,
   toggleCommentLike,
   toggleCommentHelpful,
   deleteComment,
+  hideComment,
+  restoreComment,
 };
