@@ -103,75 +103,103 @@ const CookieConsentBanner: FC<CookieConsentBannerProps> = ({ onLayoutChange }) =
     saveCookiePreferences(updated);
   };
 
-  const bannerClasses = isDark
-    ? "fixed inset-x-0 bottom-0 z-50 bg-slate-950/95 border-t border-slate-200/10 dark:border-white/10 py-6 shadow-2xl backdrop-blur-xl text-white transition-colors duration-300 max-h-[85vh] overflow-y-auto sidebar"
-    : "fixed inset-x-0 bottom-0 z-50 bg-white/95 border-t border-slate-200 py-6 shadow-2xl backdrop-blur-xl text-slate-900 transition-colors duration-300 max-h-[85vh] overflow-y-auto sidebar";
-
-  const panelClasses = isDark
-    ? "rounded-2xl border border-slate-200/10 dark:border-white/5 bg-slate-900/40 p-4 sm:p-5"
-    : "rounded-2xl border border-slate-200 bg-slate-50 p-4 sm:p-5";
-
-  const cardClasses = isDark
-    ? "rounded-xl border border-slate-200/10 dark:border-white/5 bg-slate-950/60 p-4 flex flex-col justify-between gap-4"
-    : "rounded-xl border border-slate-200 bg-white p-4 flex flex-col justify-between gap-4";
-
+  // Theme-aware class definitions
   const primaryText = isDark ? "text-white" : "text-slate-900";
   const secondaryText = isDark ? "text-slate-300" : "text-slate-600";
   const mutedText = isDark ? "text-slate-400" : "text-slate-500";
+
+  const cardClasses = isDark
+    ? "rounded-xl border border-white/5 bg-slate-900 p-3 flex flex-col justify-between gap-3"
+    : "rounded-xl border border-slate-200 bg-white p-3 flex flex-col justify-between gap-3";
+
+  const panelClasses = isDark
+    ? "rounded-xl border border-white/5 bg-slate-800/40 p-3"
+    : "rounded-xl border border-slate-200 bg-slate-50 p-3";
+
   const subtleLabel = isDark
-    ? "font-semibold uppercase tracking-wider text-[10px] bg-slate-800 px-2 py-0.5 rounded-md text-slate-400 group-hover:text-white transition-colors"
+    ? "font-semibold uppercase tracking-wider text-[10px] bg-slate-700 px-2 py-0.5 rounded-md text-slate-400 group-hover:text-white transition-colors"
     : "font-semibold uppercase tracking-wider text-[10px] bg-slate-100 px-2 py-0.5 rounded-md text-slate-500 group-hover:text-slate-900 transition-colors";
+
   const checkboxClasses = isDark
-    ? "h-4 w-4 rounded border-slate-700 bg-slate-800 text-blue-500 focus:ring-blue-500/30 transition-colors cursor-pointer"
-    : "h-4 w-4 rounded border-slate-300 bg-white text-blue-600 focus:ring-blue-500/30 transition-colors cursor-pointer";
+    ? "h-4 w-4 rounded border-slate-600 bg-slate-700 text-blue-500 focus:ring-blue-500/30 cursor-pointer"
+    : "h-4 w-4 rounded border-slate-300 bg-white text-blue-600 focus:ring-blue-500/30 cursor-pointer";
+
   const actionButtonClasses = isDark
-    ? "w-full rounded-xl border border-slate-200/10 dark:border-white/10 bg-slate-900 px-5 py-3 text-xs font-bold text-white transition-all duration-150 hover:bg-slate-800 active:scale-[0.98] cursor-pointer text-center uppercase tracking-wider"
-    : "w-full rounded-xl border border-slate-200 bg-white px-5 py-3 text-xs font-bold text-slate-900 transition-all duration-150 hover:bg-slate-100 active:scale-[0.98] cursor-pointer text-center uppercase tracking-wider";
+    ? "w-full rounded-xl border border-white/10 bg-slate-800 px-4 py-2.5 text-xs font-bold text-white transition-all duration-150 hover:bg-slate-700 active:scale-[0.98] cursor-pointer text-center uppercase tracking-wider"
+    : "w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-xs font-bold text-slate-900 transition-all duration-150 hover:bg-slate-100 active:scale-[0.98] cursor-pointer text-center uppercase tracking-wider";
+
+  const rejectButtonClasses = isDark
+    ? "w-full rounded-xl border border-white/10 bg-transparent px-4 py-2.5 text-xs font-bold text-slate-400 transition-all duration-150 hover:text-white hover:bg-slate-800 active:scale-[0.98] cursor-pointer text-center uppercase tracking-wider"
+    : "w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-xs font-bold text-slate-500 transition-all duration-150 hover:text-slate-900 hover:bg-slate-100 active:scale-[0.98] cursor-pointer text-center uppercase tracking-wider";
 
   return (
-    <div ref={bannerRef} className="fixed inset-x-0 bottom-0 z-50 px-4 pb-4 text-white sm:px-6 lg:px-8">
-      <div className="mx-auto flex max-h-[82vh] max-w-5xl flex-col gap-4 overflow-y-auto rounded-2xl border border-slate-700 bg-slate-950/95 p-4 shadow-2xl backdrop-blur-xl sm:p-5 xl:flex-row xl:items-start xl:justify-between xl:gap-6">
-        <div className="max-w-3xl space-y-3">
-          <p className="text-xs uppercase tracking-[0.26em] text-slate-400">Cookie Preferences</p>
-          <h2 className="text-xl font-semibold text-white sm:text-2xl">Manage your cookie settings</h2>
-          <p className="text-sm leading-6 text-slate-300 sm:text-base sm:leading-7">
-    <div className="fixed inset-x-0 bottom-0 z-50 bg-slate-950/95 border-t border-slate-200/10 dark:border-white/10 py-6 shadow-2xl backdrop-blur-xl text-white transition-colors duration-300 max-h-[85vh] overflow-y-auto sidebar">
-    <div className={bannerClasses}>
-      <div className="mx-auto flex max-w-6xl flex-col gap-6 px-4 sm:px-6 lg:px-8 xl:flex-row xl:items-start xl:justify-between xl:gap-8">
-        <div className="max-w-3xl space-y-4">
-          <div className="space-y-1.5">
-            <p className={`text-xs font-bold uppercase tracking-[0.24em] ${mutedText}`}>Cookie Preferences</p>
-            <h2 className={`text-xl sm:text-2xl font-bold tracking-tight ${primaryText}`}>Manage your cookie settings</h2>
-          </div>
+    // ✅ Single wrapper div — uses isDark to pick the correct theme
+    <div
+      ref={bannerRef}
+      className={`fixed inset-x-0 bottom-0 z-50 px-3 pb-3 sm:px-4 sm:pb-4 transition-colors duration-300 ${
+        isDark ? "text-white" : "text-slate-900"
+      }`}
+    >
+      <div
+        className={`mx-auto max-w-5xl rounded-2xl shadow-2xl backdrop-blur-xl border ${
+          isDark
+            ? "bg-slate-950/95 border-slate-700"
+            : "bg-white/98 border-slate-200"
+        } p-4 sm:p-5`}
+      >
+        <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between xl:gap-6">
           
-          <p className={`text-sm sm:text-base leading-relaxed ${secondaryText}`}>
-            StorySpark AI uses cookies to keep the experience secure and smooth. Select which cookie categories you want to allow, or accept all for the best experience.
-            <Link to="/cookie-policy" className="ml-1.5 text-blue-600 dark:text-blue-400 underline font-medium hover:text-blue-500 dark:hover:text-blue-300 transition-colors">Learn more</Link>.
-          </p>
+          {/* Left: text + cookie options */}
+          <div className="min-w-0 flex-1 space-y-3">
+            <div className="space-y-0.5">
+              <p className={`text-[10px] font-bold uppercase tracking-[0.24em] ${mutedText}`}>
+                Cookie Preferences
+              </p>
+              <h2 className={`text-lg font-bold tracking-tight sm:text-xl ${primaryText}`}>
+                Manage your cookie settings
+              </h2>
+            </div>
 
-          <div className={panelClasses}>
-            <div className="grid gap-3 sm:grid-cols-2">
-              <div className={cardClasses}>
-                <div className="space-y-1">
-                  <p className={`font-bold text-sm ${primaryText}`}>Essential Cookies</p>
-                  <p className={`text-xs leading-normal ${mutedText}`}>Always active for secure login and basic app functionality.</p>
-                </div>
-                <div className="flex justify-start">
-                  <span className="rounded-full bg-emerald-500/10 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-emerald-400 border border-emerald-500/20">Required</span>
-                </div>
-              </div>
+            <p className={`text-xs leading-relaxed sm:text-sm ${secondaryText}`}>
+              StorySpark AI uses cookies to keep the experience secure and smooth. Select which
+              categories you want to allow, or accept all for the best experience.{" "}
+              <Link
+                to="/cookie-policy"
+                className="text-blue-600 dark:text-blue-400 underline font-medium hover:text-blue-500 dark:hover:text-blue-300 transition-colors"
+              >
+                Learn more
+              </Link>
+              .
+            </p>
 
-              <div className={cardClasses}>
-                <div className="space-y-1">
-                  <p className={`font-bold text-sm ${primaryText}`}>Functional Cookies</p>
-                  <p className={`text-xs leading-normal ${mutedText}`}>Enable saved preferences and smoother navigation features.</p>
+            <div className={panelClasses}>
+              <div className="grid gap-2 sm:grid-cols-2">
+                {/* Essential */}
+                <div className={cardClasses}>
+                  <div className="space-y-0.5">
+                    <p className={`font-bold text-xs ${primaryText}`}>Essential Cookies</p>
+                    <p className={`text-[11px] leading-normal ${mutedText}`}>
+                      Always active for secure login and basic app functionality.
+                    </p>
+                  </div>
+                  <span className="inline-block rounded-full bg-emerald-500/10 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-emerald-400 border border-emerald-500/20">
+                    Required
+                  </span>
                 </div>
-                <div className="flex justify-start">
-                  <label className={`inline-flex items-center gap-2.5 text-xs cursor-pointer select-none group ${secondaryText}`}>
+
+                {/* Functional */}
+                <div className={cardClasses}>
+                  <div className="space-y-0.5">
+                    <p className={`font-bold text-xs ${primaryText}`}>Functional Cookies</p>
+                    <p className={`text-[11px] leading-normal ${mutedText}`}>
+                      Enable saved preferences and smoother navigation features.
+                    </p>
+                  </div>
+                  <label className={`inline-flex items-center gap-2 text-xs cursor-pointer select-none group ${secondaryText}`}>
                     <input
                       type="checkbox"
                       checked={preferences.functional}
-                      onChange={(event) => setPreferences({ ...preferences, functional: event.target.checked })}
+                      onChange={(e) => setPreferences({ ...preferences, functional: e.target.checked })}
                       className={checkboxClasses}
                     />
                     <span className={subtleLabel}>
@@ -179,19 +207,20 @@ const CookieConsentBanner: FC<CookieConsentBannerProps> = ({ onLayoutChange }) =
                     </span>
                   </label>
                 </div>
-              </div>
 
-              <div className={`${cardClasses} sm:col-span-2 flex-col sm:flex-row sm:items-center sm:justify-between gap-4`}>
-                <div className="space-y-1 max-w-xl">
-                  <p className={`font-bold text-sm ${primaryText}`}>Analytics Cookies</p>
-                  <p className={`text-xs leading-normal ${mutedText}`}>Help us understand interface engagement data to continuously refine the StorySpark AI ecosystem module suite paths.</p>
-                </div>
-                <div className="flex justify-start shrink-0">
-                  <label className={`inline-flex items-center gap-2.5 text-xs cursor-pointer select-none group ${secondaryText}`}>
+                {/* Analytics — spans full width */}
+                <div className={`${cardClasses} sm:col-span-2 sm:flex-row sm:items-center sm:justify-between`}>
+                  <div className="space-y-0.5 max-w-xl">
+                    <p className={`font-bold text-xs ${primaryText}`}>Analytics Cookies</p>
+                    <p className={`text-[11px] leading-normal ${mutedText}`}>
+                      Help us understand how people use StorySpark AI so we can improve it.
+                    </p>
+                  </div>
+                  <label className={`inline-flex items-center gap-2 text-xs cursor-pointer select-none group shrink-0 ${secondaryText}`}>
                     <input
                       type="checkbox"
                       checked={preferences.analytics}
-                      onChange={(event) => setPreferences({ ...preferences, analytics: event.target.checked })}
+                      onChange={(e) => setPreferences({ ...preferences, analytics: e.target.checked })}
                       className={checkboxClasses}
                     />
                     <span className={subtleLabel}>
@@ -202,27 +231,22 @@ const CookieConsentBanner: FC<CookieConsentBannerProps> = ({ onLayoutChange }) =
               </div>
             </div>
           </div>
-        </div>
 
-        <div className="flex flex-col gap-2.5 xl:w-[280px] shrink-0 xl:pt-11 w-full">
-          <button
-            onClick={handleAcceptAll}
-            className="w-full rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 px-5 py-3 text-xs font-bold text-white shadow-lg shadow-blue-600/10 transition-all duration-150 hover:from-blue-500 hover:to-indigo-500 active:scale-[0.98] cursor-pointer text-center uppercase tracking-wider"
-          >
-            Accept all cookies
-          </button>
-          <button
-            onClick={handleSave}
-            className={actionButtonClasses}
-          >
-            Save preferences
-          </button>
-          <button
-            onClick={handleRejectNonEssential}
-            className={isDark ? "w-full rounded-xl border border-slate-200/10 dark:border-white/10 bg-slate-950 px-5 py-3 text-xs font-bold text-slate-400 transition-all duration-150 hover:text-white hover:bg-slate-900 active:scale-[0.98] cursor-pointer text-center uppercase tracking-wider" : "w-full rounded-xl border border-slate-200 bg-slate-50 px-5 py-3 text-xs font-bold text-slate-600 transition-all duration-150 hover:text-slate-900 hover:bg-slate-100 active:scale-[0.98] cursor-pointer text-center uppercase tracking-wider"}
-          >
-            Reject non-essential
-          </button>
+          {/* Right: action buttons */}
+          <div className="flex flex-row gap-2 xl:flex-col xl:w-[220px] xl:shrink-0 xl:pt-9">
+            <button
+              onClick={handleAcceptAll}
+              className="flex-1 xl:flex-none xl:w-full rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 px-4 py-2.5 text-xs font-bold text-white shadow-md shadow-blue-600/10 transition-all duration-150 hover:from-blue-500 hover:to-indigo-500 active:scale-[0.98] cursor-pointer text-center uppercase tracking-wider"
+            >
+              Accept all
+            </button>
+            <button onClick={handleSave} className={`flex-1 xl:flex-none ${actionButtonClasses}`}>
+              Save preferences
+            </button>
+            <button onClick={handleRejectNonEssential} className={`flex-1 xl:flex-none ${rejectButtonClasses}`}>
+              Reject non-essential
+            </button>
+          </div>
         </div>
       </div>
     </div>
