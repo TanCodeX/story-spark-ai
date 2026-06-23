@@ -1,113 +1,98 @@
-import React, { useState, useMemo, ChangeEvent } from 'react';
+import React, { useState, useMemo } from 'react';
 
-// --- Sample Stories Data ---
-const SAMPLE_STORIES: string[] = [
-  "The old clock tower struck midnight. Rain lashed against the cracked window pane as Detective Vance stared at the map laid out across his desk. Every clue pointed to the docks, but his gut told him otherwise. He grabbed his coat, knowing tonight would change everything.",
-  "Deep within the Whispering Woods, a small glowing fox stepped softly across the mossy floor. Legends told of its ability to guide lost travelers back to safety, but only if they offered a secret in return. Elara stood frozen, deciding which of her deep regrets she was willing to part with.",
-  "The countdown reached zero. Instead of the deafening roar of rocket thrusters, there was only silence. The monitors in Mission Control blinked red one by one. Dr. Aris looked out the observation window at the launchpad, realizing the sabotage had come from inside the team."
+// --- Sample Generated Stories (Mock Data for demonstration) ---
+const MOCK_STORIES: string[] = [
+  "The neon signs of Neo-Paris buzzed softly through the heavy downpour. Kaelen pulled his synth-leather jacket tighter around his shoulders, his eyes locked on the encrypted data drive humming in his palm. The corporate syndicate was hunting him now, and time was running out.",
+  "Deep beneath the ocean's surface, the exploratory vessel Vanguard illuminated a sprawling reef of glowing cobalt crystals. Dr. Sarah Vance leaned closer to the viewing port, captivated by a rhythmic pulsing light from the trench below—it wasn't natural; it was a signal.",
+  "A gentle breeze rolled over the emerald hills of Aveloria, carrying the sweet scent of sun-warmed lavender. Master Elion watched his young apprentice try to conjure a simple spark. With a sudden crackle, the spark erupted into a harmless but magnificent fireworks display."
 ];
 
-export const StoryDashboard: React.FC = () => {
-  const [storyText, setStoryText] = useState<string>(
-    "Click the button above to generate a story, or start typing directly inside this box to watch the statistics update automatically in real-time!"
+export const StoryAnalyticsDashboard: React.FC = () => {
+  const [storyContent, setStoryContent] = useState<string>(
+    "Type your story here or click 'Generate New Story' below to see the statistics update instantly!"
   );
 
-  // --- Acceptance Criteria Calculations ---
-  // useMemo ensures calculations run only when storyText changes
-  const stats = useMemo(() => {
-    const cleanText = storyText.trim();
-    
-    // 1. Character count includes all visible text
-    const characterCount = cleanText.length;
+  // --- Acceptance Criteria Rule Logic ---
+  // useMemo caches calculations, ensuring performance and instant updates
+  const metrics = useMemo(() => {
+    const trimmedText = storyContent.trim();
 
-    // 2. Word count calculated correctly (handles arbitrary spaces/newlines safely)
-    const wordsArray = cleanText.split(/\s+/).filter((word) => word.length > 0);
+    // 1. Character count includes all visible text
+    const characterCount = trimmedText.length;
+
+    // 2. Word count safely splitting on arbitrary whitespaces/newlines
+    const wordsArray = trimmedText.split(/\s+/).filter(word => word.length > 0);
     const wordCount = wordsArray.length;
 
-    // 3. Reading time calculated using standard formula (words / 200)
+    // 3. Reading time calculated using the standard formula (words / 200)
+    // Using Math.ceil so a 1-word story shows as '1 min' rather than 0
     const readingTime = wordCount > 0 ? Math.ceil(wordCount / 200) : 0;
 
     return {
-      characterCount,
       wordCount,
-      readingTime,
+      characterCount,
+      readingTime
     };
-  }, [storyText]);
+  }, [storyContent]);
 
-  // Handler to generate a random story (Simulates backend API / Generation)
-  const generateRandomStory = (): void => {
-    const randomIndex = Math.floor(Math.random() * SAMPLE_STORIES.length);
-    setStoryText(SAMPLE_STORIES[randomIndex]);
-  };
-
-  // Handler for direct user typing modifications
-  const handleTextChange = (e: ChangeEvent<HTMLTextAreaElement>): void => {
-    setStoryText(e.target.value);
+  // Action: Generates/Simulates a newly fetched AI story
+  const handleStoryGeneration = (): void => {
+    const randomIndex = Math.floor(Math.random() * MOCK_STORIES.length);
+    setStoryContent(MOCK_STORIES[randomIndex]);
   };
 
   return (
-    <div className="story-dashboard-container">
-      {/* Dynamic Style Injection for Responsive Handling (No extra .css file needed) */}
+    <div className="analytics-container">
+      {/* Scope-contained responsive styles injected cleanly via JSX */}
       <style>{`
-        .story-dashboard-container {
+        .analytics-container {
           max-width: 800px;
           width: 100%;
-          margin: 0 auto;
-          padding: 2rem;
+          margin: 2rem auto;
+          padding: 1.5rem;
           display: flex;
           flex-direction: column;
           gap: 1.5rem;
-          background-color: #121214;
+          background-color: #111827;
           color: #f3f4f6;
-          font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-          min-height: 100vh;
+          font-family: system-ui, -apple-system, sans-serif;
+          border-radius: 12px;
           box-sizing: border-box;
         }
-        .story-header h1 {
-          font-size: 1.8rem;
-          margin: 0 0 0.5rem 0;
-        }
-        .story-header p {
-          color: #9ca3af;
-          margin: 0;
-        }
-        .story-btn {
-          background-color: #6366f1;
+        .header-section h2 {
+          margin: 0 0 0.25rem 0;
+          font-size: 1.75rem;
           color: #ffffff;
-          border: none;
-          padding: 0.75rem 1.5rem;
-          border-radius: 6px;
-          font-weight: 600;
-          cursor: pointer;
-          font-size: 1rem;
-          transition: background 0.2s ease;
-          width: fit-content;
         }
-        .story-btn:hover {
-          background-color: #4f46e5;
+        .header-section p {
+          margin: 0;
+          color: #9ca3af;
+          font-size: 0.95rem;
         }
-        .story-textarea {
-          background-color: #1e1e24;
+        .story-editor {
+          width: 100%;
+          min-height: 180px;
+          background-color: #1f2937;
           color: #f3f4f6;
           border: 1px solid #374151;
           border-radius: 8px;
-          padding: 1.5rem;
-          min-height: 180px;
+          padding: 1rem;
+          font-size: 1.05rem;
           line-height: 1.6;
-          font-size: 1.1rem;
           resize: vertical;
-          font-family: inherit;
           box-sizing: border-box;
+          font-family: inherit;
         }
-        .story-textarea:focus {
+        .story-editor:focus {
           outline: 2px solid #6366f1;
           border-color: transparent;
         }
+        /* --- Clean & Minimal Statistics Panel UI --- */
         .stats-panel {
           display: grid;
-          grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+          grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
           gap: 1rem;
-          background-color: #1e1e24;
+          background-color: #1f2937;
           border: 1px solid #374151;
           border-radius: 8px;
           padding: 1rem;
@@ -117,14 +102,14 @@ export const StoryDashboard: React.FC = () => {
           flex-direction: column;
           align-items: center;
           justify-content: center;
-          padding: 0.75rem;
+          padding: 0.5rem;
           border-right: 1px solid #374151;
         }
         .stat-card:last-child {
           border-right: none;
         }
         .stat-label {
-          font-size: 0.85rem;
+          font-size: 0.8rem;
           text-transform: uppercase;
           letter-spacing: 0.05em;
           color: #9ca3af;
@@ -133,13 +118,28 @@ export const StoryDashboard: React.FC = () => {
         .stat-value {
           font-size: 1.5rem;
           font-weight: 700;
-          color: #f3f4f6;
+          color: #ffffff;
         }
+        .btn-generate {
+          background-color: #6366f1;
+          color: #ffffff;
+          border: none;
+          padding: 0.75rem 1.25rem;
+          border-radius: 6px;
+          font-weight: 600;
+          cursor: pointer;
+          transition: background 0.2s ease;
+          align-self: flex-start;
+        }
+        .btn-generate:hover {
+          background-color: #4f46e5;
+        }
+        /* Responsive handling to prevent structural breakages */
         @media (max-width: 600px) {
           .stat-card {
             border-right: none;
             border-bottom: 1px solid #374151;
-            padding-bottom: 1rem;
+            padding-bottom: 0.75rem;
           }
           .stat-card:last-child {
             border-bottom: none;
@@ -148,39 +148,38 @@ export const StoryDashboard: React.FC = () => {
         }
       `}</style>
 
-      <header className="story-header">
-        <h1>Story Dashboard</h1>
-        <p>Generate stories and view real-time readability insights.</p>
+      <header className="header-section">
+        <h2>Story Space</h2>
+        <p>Your workspace analytics update automatically as new text displays.</p>
       </header>
 
-      <div>
-        <button onClick={generateRandomStory} className="story-btn">
-          Generate New Story
-        </button>
-      </div>
-
-      {/* Story Content Editor Box */}
+      {/* Story Output / Input Box */}
       <textarea
-        value={storyText}
-        onChange={handleTextChange}
-        className="story-textarea"
-        placeholder="Type or generate a story here..."
+        className="story-editor"
+        value={storyContent}
+        onChange={(e) => setStoryContent(e.target.value)}
+        placeholder="Waiting for story content..."
       />
 
-      {/* --- STATISTICS PANEL (Clean & Minimal UI) --- */}
-      <section className="stats-panel" aria-label="Story Metrics">
+      {/* Action button to test story updates */}
+      <button className="btn-generate" onClick={handleStoryGeneration}>
+        Generate New Story
+      </button>
+
+      {/* Acceptance Criteria Met: Stats panel near the story output */}
+      <section className="stats-panel" aria-label="Story Readability Statistics">
         <div className="stat-card">
-          <span className="stat-label">Words</span>
-          <span className="stat-value">{stats.wordCount.toLocaleString()}</span>
+          <span className="stat-label">Word Count</span>
+          <span className="stat-value">{metrics.wordCount.toLocaleString()}</span>
         </div>
         <div className="stat-card">
-          <span className="stat-label">Characters</span>
-          <span className="stat-value">{stats.characterCount.toLocaleString()}</span>
+          <span className="stat-label">Character Count</span>
+          <span className="stat-value">{metrics.characterCount.toLocaleString()}</span>
         </div>
         <div className="stat-card">
-          <span className="stat-label">Reading Time</span>
+          <span className="stat-label">Est. Reading Time</span>
           <span className="stat-value">
-            {stats.readingTime === 1 ? '1 min' : `${stats.readingTime} mins`}
+            {metrics.readingTime === 1 ? '1 min' : `${metrics.readingTime} mins`}
           </span>
         </div>
       </section>
@@ -188,4 +187,4 @@ export const StoryDashboard: React.FC = () => {
   );
 };
 
-export default StoryDashboard;
+export default StoryAnalyticsDashboard;
