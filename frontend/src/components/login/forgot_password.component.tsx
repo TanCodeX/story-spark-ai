@@ -165,6 +165,7 @@ const ForgotPasswordComponent = () => {
       } else {
         throw new Error("Verification token missing in response");
       }
+      setIsBusy(false);
     } catch (error: unknown) {
       toast.error(
         getApiErrorMessage(
@@ -173,7 +174,6 @@ const ForgotPasswordComponent = () => {
         ),
       );
       console.log("error: ", error);
-    } finally {
       setIsBusy(false);
     }
   };
