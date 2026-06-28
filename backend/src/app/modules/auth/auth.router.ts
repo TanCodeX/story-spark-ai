@@ -51,6 +51,13 @@ router.post(
   AuthController.changePassword
 );
 
+// Verify email change API route
+router.post(
+  "/verify-email-change",
+  validateRequest(UserValidator.verifyEmailChange),
+  AuthController.verifyEmailChange
+);
+
 // Forgot Password API route
 router.post(
   "/forgot-password",
