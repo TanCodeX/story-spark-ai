@@ -92,7 +92,7 @@ const getSinglePost = catchAsync(async (req: Request, res: Response) => {
   
   let token = null;
   try {
-    token = getToken(req);
+    token = await getToken(req);
   } catch (error) {
     // Guest or unauthenticated request
   }
@@ -110,7 +110,7 @@ const getPostsByTag = catchAsync(async (req: Request, res: Response) => {
   const tag = routeParam(req.params.tag);
   const excludeId = req.query.excludeId as string | undefined;
   const limit = req.query.limit ? Math.min(Number(req.query.limit), 50) : 10;
-  const result = await PostService.getPostsByTag(tag, excludeId, limit);
+  const result = await PostService.getPostsByTag(tag, excludeId);
   sendResponse(res, {
     statusCode: httpStatus.OK,
     success: true,
@@ -184,6 +184,18 @@ const translateStory = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const forkStory = catchAsync(async (req: Request, res: Response) => {
+  const id = routeParam(req.params.id);
+  const token = await getToken(req);
+  const result = await PostService.forkStory(id, token);
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: "Story forked successfully!",
+    data: result,
+  });
+});
+
 const getGenres = catchAsync(async (_req: Request, res: Response) => {
   const result = await PostService.getGenres();
   sendResponse(res, {
@@ -208,5 +220,6 @@ export const PostController = {
   deletePost,
   remixStory,
   translateStory,
+  forkStory,
   getGenres,
 };
