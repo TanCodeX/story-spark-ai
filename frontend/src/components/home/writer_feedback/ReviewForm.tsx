@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useState, useCallback } from "react";
+import React, { useState, useCallback } from "react";
 import { useCreateReviewMutation } from "../../../redux/apis/review.api";
 
 const ratingLabels = ["", "Poor", "Fair", "Good", "Great", "Excellent"];
@@ -66,6 +66,7 @@ const ReviewForm: React.FC = () => {
   const [rating, setRating] = useState(0);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [success, setSuccess] = useState(false);
+  const [isDark, setIsDark] = useState(false);
 
   const [createReview, { isLoading }] = useCreateReviewMutation();
 
@@ -96,6 +97,7 @@ const ReviewForm: React.FC = () => {
       setRating(0);
       setErrors({});
     } catch (err) {
+      // keep error message generic
       setErrors({ submit: "Failed to submit review. Please try again." });
       setSuccess(false);
     }
@@ -104,10 +106,12 @@ const ReviewForm: React.FC = () => {
   return (
     <div className="mx-auto max-w-2xl">
       <div className="relative overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-br from-[#0f172a]/90 to-[#111827]/90 p-6 sm:p-8 md:p-10 shadow-2xl shadow-blue-500/10 backdrop-blur-md">
+        {/* Background Glow */}
         <div className="pointer-events-none absolute -right-20 -top-20 h-60 w-60 rounded-full bg-blue-500/10 blur-3xl" />
         <div className="pointer-events-none absolute -bottom-20 -left-20 h-60 w-60 rounded-full bg-indigo-500/10 blur-3xl" />
 
         <div className="relative z-10">
+          {/* Header */}
           <div className="mb-8">
             <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-blue-500/20 bg-blue-500/10 px-3 py-1 text-xs font-semibold uppercase tracking-widest text-blue-400">
               ✍️ Share Your Story
@@ -122,27 +126,8 @@ const ReviewForm: React.FC = () => {
             </p>
           </div>
 
-          {success && (
-            <div
-              aria-live="polite"
-              className="mb-6 flex items-center gap-3 rounded-xl border border-green-500/20 bg-green-500/10 p-4 text-sm text-green-400 transition-all duration-300"
-            >
-              <span className="text-lg">🎉</span>
-              <span>Thank you! Your review has been submitted for approval.</span>
-            </div>
-          )}
-
-          {errors.submit && (
-            <div
-              aria-live="polite"
-              className="mb-6 flex items-center gap-3 rounded-xl border border-red-500/20 bg-red-500/10 p-4 text-sm text-red-400"
-            >
-              <span className="text-lg">⚠️</span>
-              <span>{errors.submit}</span>
-            </div>
-          )}
-
           <div className="space-y-6">
+            {/* Name */}
             <div>
               <label
                 htmlFor="name"
@@ -171,6 +156,7 @@ const ReviewForm: React.FC = () => {
               )}
             </div>
 
+            {/* Role */}
             <div>
               <label
                 htmlFor="role"
@@ -199,6 +185,7 @@ const ReviewForm: React.FC = () => {
               )}
             </div>
 
+            {/* Feedback */}
             <div>
               <label
                 htmlFor="feedback"
@@ -240,6 +227,7 @@ const ReviewForm: React.FC = () => {
               </div>
             </div>
 
+            {/* Rating */}
             <div className="pb-8">
               <label className="mb-2 flex items-center gap-2 text-sm font-medium text-gray-300">
                 <span className="text-blue-400">⭐</span>
