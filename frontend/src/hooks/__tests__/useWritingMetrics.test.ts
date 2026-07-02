@@ -7,7 +7,7 @@ import { renderHook } from "@testing-library/react";
 import { useWritingMetrics } from "../useWritingMetrics";
 
 describe("useWritingMetrics", () => {
-  let mockCallback: ReturnType<typeof vi.fn>;
+  let mockCallback: (session: any[]) => void;
 
   beforeEach(() => {
     mockCallback = vi.fn();
