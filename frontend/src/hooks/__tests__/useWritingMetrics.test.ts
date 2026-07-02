@@ -4,10 +4,10 @@
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { renderHook } from "@testing-library/react";
-import { useWritingMetrics } from "../useWritingMetrics";
+import { useWritingMetrics, WritingMetrics } from "../useWritingMetrics";
 
 describe("useWritingMetrics", () => {
-  let mockCallback: (session: any[]) => void;
+  let mockCallback: (session: WritingMetrics[]) => void;
 
   beforeEach(() => {
     mockCallback = vi.fn();
