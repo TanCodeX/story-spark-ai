@@ -1,9 +1,13 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 export const useScrollDirection = () => {
   const [scrollDirection, setScrollDirection] = useState<'up' | 'down'>('up');
   const [isAtTop, setIsAtTop] = useState(true);
-  const [lastScrollY, setLastScrollY] = useState(0);
+  // Use a ref to track last scroll Y without triggering effect re-runs.
+  // Using useState for lastScrollY caused the effect to re-run on every
+  // scroll event (since lastScrollY changes every scroll), creating a
+  // stale-closure bug where handleScroll always read the old value.
+  const lastScrollYRef = useRef(0);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -11,18 +15,18 @@ export const useScrollDirection = () => {
 
       setIsAtTop(currentScrollY < 10);
 
-      if (currentScrollY > lastScrollY) {
+      if (currentScrollY > lastScrollYRef.current) {
         setScrollDirection('down');
       } else {
         setScrollDirection('up');
       }
 
-      setLastScrollY(currentScrollY);
+      lastScrollYRef.current = currentScrollY;
     };
 
     window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
-  }, [lastScrollY]);
+  }, []);
 
   return { scrollDirection, isAtTop };
 };
