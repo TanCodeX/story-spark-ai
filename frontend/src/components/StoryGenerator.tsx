@@ -16,11 +16,16 @@ export const StoryGenerator: React.FC<StoryGeneratorProps> = ({ onStoryGenerated
   const [stories, setStories] = useState<any[]>([]);
   const [error, setError] = useState<string | null>(null);
 
+  // Derived values used both in JSX and inside handleGenerate
+  const trimmedPrompt = prompt.trim();
+  const promptLength = trimmedPrompt.length;
+  const isPromptInvalid =
+    promptLength < MIN_PROMPT_LENGTH || promptLength > MAX_PROMPT_LENGTH;
+
   const abortControllerRef = useRef<AbortController | null>(null);
   const handleGenerate = async () => {
 
-    const trimmedPrompt = prompt.trim();
-    const promptLength = trimmedPrompt.length;
+    // trimmedPrompt and promptLength are already derived at component scope above
     if (!trimmedPrompt) {
       setError('Please enter a story prompt.');
       return;
