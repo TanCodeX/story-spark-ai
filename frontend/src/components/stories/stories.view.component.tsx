@@ -133,9 +133,9 @@ const StoriesViewComponent: React.FC<StoriesComponentProps> = ({
   }, [stories]);
 
 useEffect(() => {
-  const autoSaveStory = async () => {
-    if (!selectedStory || !isLogin) return;
+  if (!selectedStory || !isLogin) return;
 
+  const timer = setTimeout(async () => {
     const post: IPost = {
       ...selectedStory,
       topic: selectTopics,
@@ -147,9 +147,9 @@ useEffect(() => {
     } catch (error) {
       console.error("Auto-save failed", error);
     }
-  };
+  }, 1500);
 
-  autoSaveStory();
+  return () => clearTimeout(timer);
 }, [selectedStory, isLogin, selectTopics]);
 
   const handelStorySelection = (story: IStories) => {
@@ -277,8 +277,9 @@ const handleGenerateCharacterProfile = async () => {
         setStories([]);
         setSelectedStory(null);
       }
-    } catch {
-      toast.error("Something went wrong. Please try again.");
+    } catch (error) {
+      const message = error?.data?.message || error?.message || "Something went wrong. Please try again.";
+      toast.error(message);
     } finally {
       setLoading(false);
     }
@@ -321,7 +322,7 @@ if (!stories || stories.length === 0) {
         <div className="col-span-1 lg:col-span-8 flex flex-col">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4">
             <div className="">
-              <h1 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-300 to-blue-400">
+              <h1 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-300 to-blue-400 break-words max-w-full">
                 {selectedStory?.title}
               </h1>
             </div>
@@ -590,7 +591,7 @@ if (!stories || stories.length === 0) {
                   <div className="mb-2 inline-flex items-center rounded-full bg-purple-600 py-1 px-3 text-xs font-semibold text-white shadow-sm">
                    {selectedStory.tag.toUpperCase()}
                   </div>
-                  <h6 className="mb-1 text-gray-300 text-xl font-semibold">
+                  <h6 className="mb-1 text-gray-300 text-xl font-semibold truncate max-w-full" title={selectedStory.title}>
                     {selectedStory.title}
                   </h6>
                   <p className="text-gray-400 font-light breakwords text-sm sm:text-base">
