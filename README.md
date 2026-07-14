@@ -474,7 +474,31 @@ pnpm install
 > 💡 **Still stuck?** Open an issue or check existing ones — your problem may already have a solution!
 
 ---
+## Architecture
 
+```mermaid
+flowchart TB
+    Client["Client<br/>React + Vite SPA"]
+
+    subgraph Backend["Backend API — Node.js + Express (/api/v1)"]
+        Auth["Auth & Users<br/>JWT, profiles"]
+        StoryEngine["Story Engine<br/>AI generation & continuation"]
+        Payments["Payments<br/>Razorpay checkout"]
+    end
+
+    MongoDB[("MongoDB<br/>Data storage")]
+    AIModel["AI Model<br/>Text generation"]
+    Notify["Notifications<br/>Email + Socket.io"]
+    Razorpay["Razorpay<br/>Payment gateway"]
+
+    Client -- "REST /api/v1 + Socket.io" --> Backend
+    Auth --> MongoDB
+    StoryEngine --> MongoDB
+    StoryEngine --> AIModel
+    Payments --> MongoDB
+    Payments --> Razorpay
+    Backend --> Notify
+```
 ## Contributing 👨‍💻
 
 Contributions make the open source community such an amazing place to learn, inspire, and create.
