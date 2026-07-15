@@ -21,6 +21,7 @@ import TimelineConsistencyChecker from "../timeline/TimelineConsistencyChecker";
 import GenreBlendGenerator from "../genre/GenreBlendGenerator";
 import RelationshipGraph from "../relationship/RelationshipGraph";
 import GenreWeightControls from "../genre/GenreWeightControls";
+import StoryStylePresets from "../style/StoryStylePresets";
 
 
 import {
@@ -327,6 +328,7 @@ const StoryWorkspace = () => {
 />
 
 <GenreWeightControls />
+<StoryStylePresets />
 
   <StoryViewer
     chapters={currentStory.chapters}
