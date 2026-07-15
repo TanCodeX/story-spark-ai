@@ -7,7 +7,7 @@ import {
   getAnthropicClient,
 } from "../../../services/ai.service";
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY as string);
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
 
 export const enhancePromptWithGemini = async (
   prompt: string,

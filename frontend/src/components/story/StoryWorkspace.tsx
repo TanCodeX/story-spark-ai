@@ -20,7 +20,7 @@ import DialogueEnhancer from "../dialogue/DialogueEnhancer";
 import TimelineConsistencyChecker from "../timeline/TimelineConsistencyChecker";
 import GenreBlendGenerator from "../genre/GenreBlendGenerator";
 import RelationshipGraph from "../relationship/RelationshipGraph";
-import VocabularyAnalyzer from "../vocabulary/VocabularyAnalyzer";
+
 
 import {
   getSafeFileName,
@@ -316,6 +316,7 @@ const StoryWorkspace = () => {
       .join("\n\n") || ""
   }
 />
+
 <VocabularyAnalyzer
   story={
     currentStory.chapters
