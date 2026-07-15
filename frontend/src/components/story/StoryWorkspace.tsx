@@ -17,6 +17,7 @@ import PlotHoleDetector from "../plot-hole/PlotHoleDetector";
 import PacingAnalyzer from "../pacing/PacingAnalyzer";
 import OutlineQualityAnalyzer from "../outline-quality/OutlineQualityAnalyzer";
 import DialogueEnhancer from "../dialogue/DialogueEnhancer";
+import TimelineConsistencyChecker from "../timeline/TimelineConsistencyChecker";
 
 import {
   getSafeFileName,
@@ -285,6 +286,13 @@ const StoryWorkspace = () => {
   }
 />
 <DialogueEnhancer
+  story={
+    currentStory.chapters
+      ?.map((chapter) => chapter.content)
+      .join("\n\n") || ""
+  }
+/>
+<TimelineConsistencyChecker
   story={
     currentStory.chapters
       ?.map((chapter) => chapter.content)
