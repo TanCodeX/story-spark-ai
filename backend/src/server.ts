@@ -8,6 +8,8 @@ import { Server } from "socket.io";
 import { JwtHelpers } from "./utils/jwt.helper";
 import { Secret } from "jsonwebtoken";
 import logger from "./utils/logger.util";
+import { setupCollabSocket } from "./socket/collab.socket";
+import { setNotificationSocket } from "./socket/notification.socket";
 
 // Override DNS resolvers only when explicitly configured, default to the platform environment
 if (config.dns_servers?.length) {
@@ -73,7 +75,18 @@ async function main() {
     config.cors_origins && config.cors_origins.length > 0
       ? config.cors_origins
       : defaultCorsOrigins;
+  // Instantiate Socket.IO on top of the HTTP server (previously imported
+  // but never constructed — realtime features were silently dead).
+  const io = new Server(httpServer, {
+    cors: {
+      origin: socketCorsOrigins,
+      credentials: true,
+    },
+  });
 
+  setupCollabSocket(io);
+  setNotificationSocket(io);
+  
   // Start the server listener
   const PORT = config.port || 4000;
   httpServer.listen(PORT, () => {
