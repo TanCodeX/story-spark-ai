@@ -123,9 +123,9 @@ describe("useAutoSave", () => {
       expect(mockFetch).toHaveBeenCalledTimes(1);
     });
 
-    expect(mockFetch).toHaveBeenCalledWith("/api/v1/stories/save", expect.objectContaining({
+    expect(mockFetch).toHaveBeenCalledWith("/api/stories/save", expect.objectContaining({
       method: "PUT",
-      body: JSON.stringify({ draftId: "draft-online-test", content: "Edited Content Offline" }),
+      body: JSON.stringify({ content: "Edited Content Offline" }),
     }));
 
     expect(result.current.isOnline).toBe(true);

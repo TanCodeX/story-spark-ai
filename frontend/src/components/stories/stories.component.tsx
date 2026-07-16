@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useCallback, useState, useEffect, useRef } from "react";
 import jsPDF from "jspdf";
 import StoriesViewComponent, { IStories } from "./stories.view.component";
 import { Link, useLocation, useNavigate } from "react-router-dom";
@@ -42,11 +42,10 @@ type Inputs = {
 };
 
 const MAX_PROMPT_LENGTH = 2000;
-const WARN_THRESHOLD = 0.85;
 const lengths = ["short", "medium", "long"] as const;
 
 const StoriesComponent = () => {
-const WARN_THRESHOLD = 0.8;
+const WARN_THRESHOLD = 0.85;
 const DANGER_THRESHOLD = 0.95;
 
 const LANGUAGES = [
@@ -867,10 +866,13 @@ useEffect(() => {
     }
   };
 
-  document.addEventListener("mousedown", handleClickOutside);
-  document.addEventListener("keydown", handleKeyDown);
   useEffect(() => {
+    document.addEventListener("mousedown", handleClickOutside);
+    document.addEventListener("keydown", handleKeyDown);
+
     return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("keydown", handleKeyDown);
       if ("speechSynthesis" in window) {
         window.speechSynthesis.cancel();
       }
@@ -970,12 +972,6 @@ useEffect(() => {
 
     return () => clearTimeout(timer);
   }, [selectedStory, selectedStory?.content, isLogin, selectTopics, createPost]);
-
-  return () => {
-    document.removeEventListener("mousedown", handleClickOutside);
-    document.removeEventListener("keydown", handleKeyDown);
-  };
-}, []);
 
 useEffect(() => {
   if (location.state && location.state.prompt) {
@@ -1429,14 +1425,37 @@ const handleExportMarkdown = () => {
     onOpenHelp: () => setShowHelpModal(true),
     onCloseHelp: () => setShowHelpModal(false),
     onGenerate: () => {
-      if (isGenerateDisabled) {
-        return;
-      }
+      if (isGenerateDisabled) return;
       if (inputRef.current) {
         const form = inputRef.current.closest("form");
         if (form) form.requestSubmit();
-
       }
+    },
+    onPublish: () => {
+      const btn = document.getElementById("publish-story-btn");
+      btn?.click();
+    },
+    focusPrompt: () => inputRef.current?.focus(),
+    hasStory: stories.length > 0,
+  });
+
+  const handelPublishStory = useCallback(async () => {
+    if (!isLogin) {
+      toast.error("Please login to publish the story.");
+      return;
+    }
+    if (!selectedStory) {
+      toast.error("No story available. Please generate a story first.");
+      return;
+    }
+
+    const post: IPost = {
+      ...selectedStory,
+      topic: selectTopics,
+    };
+
+    setLoading(true);
+    try {
       const result = await createPost(post).unwrap();
       if (result) {
         toast.success("Story published successfully!");
@@ -1444,12 +1463,13 @@ const handleExportMarkdown = () => {
         setSelectedStory(null);
         onPublishSuccess?.();
       }
-    } catch {
-      toast.error("Something went wrong. Please try again.");
+    } catch (error) {
+      const message = getErrorMessage(error);
+      toast.error(message || "Something went wrong. Please try again.");
     } finally {
       setLoading(false);
     }
-  };
+  }, [isLogin, selectedStory, selectTopics, createPost, setStories, setSelectedStory, onPublishSuccess]);
 
   const calculateReadingTime = (content: string): number => {
     const words = getWordCount(content);
