@@ -3,7 +3,6 @@ import { Character } from '../Character.model';
 import ApiError from '../errors/api_error';
 import httpStatus from 'http-status';
 import catchAsync from '../shared/catch_async';
-
 export const createCharacter = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
   const { name, age, personality, appearance, background, traits, notes } = req.body;
   const userId = req.user?.id;
@@ -47,6 +46,7 @@ export const getCharacterById = catchAsync(async (req: Request, res: Response, n
   const character = await Character.findOne({ _id: id, userId });
   if (!character) {
     throw new ApiError(httpStatus.NOT_FOUND, 'Character not found');
+
   }
 
   res.status(200).json({ success: true, data: character });
