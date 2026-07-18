@@ -1,13 +1,17 @@
 import { Application, Request, Response } from "express";
 import mongoose from "mongoose";
 import config from "./config";
-import app from "./app";
+import app, { defaultCorsOrigins } from "./app";
 import dns from "node:dns";
 import http from "http";
 import { Server } from "socket.io";
 import { JwtHelpers } from "./utils/jwt.helper";
 import { Secret } from "jsonwebtoken";
 import logger from "./utils/logger.util";
+import { setupCollabSocket } from "./socket/collab.socket";
+import { setNotificationSocket } from "./socket/notification.socket";
+import { YjsGateway } from "./app/modules/collab/yjs.gateway";
+import { socketRateLimiter } from "./socket/socket-rate-limiter";
 
 // Override DNS resolvers only when explicitly configured, default to the platform environment
 if (config.dns_servers?.length) {
@@ -67,15 +71,31 @@ async function main() {
   }
 
   const httpServer = http.createServer(app);
-  const defaultCorsOrigins = 
-    process.env.NODE_ENV === "development"
-      ? ["http://localhost:4001", "http://localhost:4002"]
-      : [];
+  // defaultCorsOrigins is imported from app.ts for consistency
 
   const socketCorsOrigins =
     config.cors_origins && config.cors_origins.length > 0
       ? config.cors_origins
       : defaultCorsOrigins;
+
+  // Initialize Socket.IO server with rate limiting
+  const io = new Server(httpServer, {
+    cors: {
+      origin: socketCorsOrigins,
+      credentials: true,
+      methods: ["GET", "POST"],
+    },
+  });
+
+  // Apply rate limiting to all Socket.IO connections
+  io.use(socketRateLimiter);
+
+  // Setup Socket.IO namespaces
+  setupCollabSocket(io);
+  setNotificationSocket(io);
+  new YjsGateway(io);
+
+  logger.info("🔌 Socket.IO server initialized with rate limiting");
 
   // Start the server listener
   const PORT = config.port || 4000;
