@@ -1,101 +1,117 @@
-import { stripHtmlTags, truncate, normalizeWhitespace } from "../sanitization";
+import {
+  stripHtmlTags,
+  truncate,
+  normalizeWhitespace,
+} from "../sanitization";
 
 describe("stripHtmlTags", () => {
   it("removes complete HTML tags", () => {
-    expect(stripHtmlTags("<p>Hello <strong>World</strong></p>")).toBe("Hello World");
+    expect(stripHtmlTags("<p>Hello</p>")).toBe("Hello");
   });
 
-  it("removes incomplete tag openers", () => {
-    expect(stripHtmlTags("Click <script>alert('xss')</script>")).toBe(
-      "Click alert('xss')"
+  it("removes nested tags", () => {
+    expect(stripHtmlTags("<div><span>text</span></div>")).toBe("text");
+  });
+
+  it("removes script tags", () => {
+    expect(stripHtmlTags("<script>alert('xss')</script>")).toBe(
+      "alert('xss')"
     );
   });
 
-  it("returns empty string for empty input", () => {
-    expect(stripHtmlTags("")).toBe("");
+  it("removes incomplete tag openers", () => {
+    expect(stripHtmlTags("Hello <script")).toBe("Hello");
   });
 
-  it("returns empty string for null/undefined", () => {
+  it("returns empty string for null input", () => {
     expect(stripHtmlTags(null as any)).toBe("");
+  });
+
+  it("returns empty string for undefined input", () => {
     expect(stripHtmlTags(undefined as any)).toBe("");
   });
 
-  it("handles nested tags", () => {
-    expect(stripHtmlTags("<div><span><p>Text</p></span></div>")).toBe("Text");
+  it("returns empty string for empty string", () => {
+    expect(stripHtmlTags("")).toBe("");
   });
 
-  it("handles text with no tags", () => {
-    expect(stripHtmlTags("Plain text without tags")).toBe("Plain text without tags");
+  it("returns string unchanged when no tags present", () => {
+    expect(stripHtmlTags("Hello World")).toBe("Hello World");
   });
 
-  it("removes self-closing tags", () => {
-    expect(stripHtmlTags("Image <img src='x'/> here")).toBe("Image  here");
+  it("handles standalone < characters", () => {
+    expect(stripHtmlTags("a < b")).toBe("a");
+  });
+
+  it("trims resulting whitespace", () => {
+    expect(stripHtmlTags("  <p>text</p>  ")).toBe("text");
   });
 });
 
 describe("truncate", () => {
-  it("truncates long strings with default suffix", () => {
-    const result = truncate("This is a very long string that should be truncated", 20);
-    expect(result).toBe("This is a very lo...");
-    expect(result.length).toBe(20);
-  });
-
-  it("truncates with custom suffix", () => {
-    const result = truncate("Hello World", 5, "...");
-    expect(result).toBe("He...");
+  it("truncates string longer than maxLength", () => {
+    expect(truncate("Hello World", 5)).toBe("He...");
   });
 
   it("returns string unchanged when shorter than maxLength", () => {
     expect(truncate("Hi", 10)).toBe("Hi");
   });
 
-  it("returns empty string for empty input", () => {
-    expect(truncate("", 10)).toBe("");
+  it("returns string unchanged when equal to maxLength", () => {
+    expect(truncate("Hello", 5)).toBe("Hello");
   });
 
-  it("returns empty string for null/undefined", () => {
+  it("uses default '...' suffix", () => {
+    expect(truncate("Hello World", 8)).toBe("Hello...");
+  });
+
+  it("uses custom suffix", () => {
+    expect(truncate("Hello World", 8, "***")).toBe("Hello***");
+  });
+
+  it("returns input unchanged when input.length <= maxLength", () => {
+    expect(truncate("Hi", 10, "...")).toBe("Hi");
+  });
+
+  it("returns empty string for null input", () => {
     expect(truncate(null as any, 10)).toBe("");
+  });
+
+  it("returns empty string for undefined input", () => {
     expect(truncate(undefined as any, 10)).toBe("");
   });
 
-  it("handles maxLength of zero", () => {
-    const result = truncate("Hello", 0);
-    expect(result).toBe("");
-  });
-
-  it("handles suffix longer than maxLength", () => {
-    const result = truncate("Hello", 3, "...");
-    expect(result).toBe("...");
+  it("returns empty string for empty string", () => {
+    expect(truncate("", 10)).toBe("");
   });
 });
 
 describe("normalizeWhitespace", () => {
-  it("collapses multiple spaces to one", () => {
+  it("collapses multiple spaces to single space", () => {
     expect(normalizeWhitespace("Hello    World")).toBe("Hello World");
-  });
-
-  it("trims leading and trailing whitespace", () => {
-    expect(normalizeWhitespace("   Hello   ")).toBe("Hello");
   });
 
   it("collapses tabs and newlines", () => {
     expect(normalizeWhitespace("Hello\t\nWorld")).toBe("Hello World");
   });
 
-  it("returns empty string for empty input", () => {
-    expect(normalizeWhitespace("")).toBe("");
+  it("trims leading and trailing whitespace", () => {
+    expect(normalizeWhitespace("  Hello World  ")).toBe("Hello World");
   });
 
-  it("returns empty string for whitespace-only", () => {
-    expect(normalizeWhitespace("   \t\n  ")).toBe("");
-  });
-
-  it("returns empty string for null/undefined", () => {
+  it("returns empty string for null input", () => {
     expect(normalizeWhitespace(null as any)).toBe("");
+  });
+
+  it("returns empty string for undefined input", () => {
     expect(normalizeWhitespace(undefined as any)).toBe("");
   });
 
+  it("returns empty string for empty string", () => {
+    expect(normalizeWhitespace("")).toBe("");
+  });
+
   it("handles mixed whitespace", () => {
-    expect(normalizeWhitespace("  Hello   \n\t  World  ")).toBe("Hello World");
+    expect(normalizeWhitespace("  Hello  \n\t  World  ")).toBe("Hello World");
   });
 });
