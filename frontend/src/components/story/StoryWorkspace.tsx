@@ -4,11 +4,12 @@ import toast, { Toaster } from "react-hot-toast";
 
 import { RootState } from "../../redux/store";
 import { getUserInfo } from "../../services/auth.service";
-
 import ChapterSidebar from "./ChapterSidebar";
+import DocumentStatsPanel from "./DocumentStatsPanel";
 import StoryViewer from "./StoryViewer";
 import ContinueStoryButton from "./ContinueStoryButton";
 import CharacterNetwork from "../CharacterNetwork";
+import { useDocumentStats } from "../../hooks/useDocumentStats";
 import StoryCoverGenerator from "../cover-generator/StoryCoverGenerator";
 import StoryChecklist from "../checklist/StoryChecklist";
 import StoryRewritePanel from "../rewrite/StoryRewritePanel";
@@ -39,6 +40,9 @@ const StoryWorkspace = () => {
     (state: RootState) => state.story.currentStory
   );
   const [workspaceMode, setWorkspaceMode] = useState<"editor" | "network">("editor");
+  const { docStats, chapterAvgWords, maxChapterWords } = useDocumentStats(
+    currentStory?.chapters
+  );
 
   const [selectedTheme, setSelectedTheme] = useState<
   "Classic" | "Novel" | "Minimal" | "Dark"
@@ -170,9 +174,13 @@ const StoryWorkspace = () => {
   return (
     <div className="flex bg-black h-screen">
       <Toaster position="top-right" reverseOrder={false} />
-      <ChapterSidebar
-        chapters={currentStory.chapters}
-      />
+      <div className="flex flex-col h-screen border-r border-zinc-800">
+        <DocumentStatsPanel stats={docStats} chapterAvgWords={chapterAvgWords} />
+        <ChapterSidebar
+          chapters={currentStory.chapters}
+          maxChapterWords={maxChapterWords}
+        />
+      </div>
 
       <div className="flex flex-col flex-1">
         <div className="flex justify-between items-center p-4 border-b border-zinc-800 bg-zinc-900">
