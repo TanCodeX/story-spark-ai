@@ -397,6 +397,7 @@ export const useSpeechSynthesis = (
       synthRef.current.speak(utterance);
       setCurrentWordIndex(0);
     },
+
     [
       isSupported,
       rateState,
@@ -407,6 +408,9 @@ export const useSpeechSynthesis = (
       selectedLanguage,
       stop,
     ],
+
+    [isSupported, rateState, pitchState, volumeState, selectedVoiceId, selectedLanguage, stop, resolveBrowserVoice],
+
   );
 
   const pause = useCallback(() => {
