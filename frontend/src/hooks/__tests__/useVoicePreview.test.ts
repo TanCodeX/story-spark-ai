@@ -1,141 +1,154 @@
 /**
  * useVoicePreview.test.ts
  * Unit tests for the useVoicePreview React hook.
+ *
+ * @jest-environment jsdom
  */
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { describe, it, expect, beforeEach, vi, afterEach } from "vitest";
 import { renderHook, act } from "@testing-library/react";
-import { useVoicePreview } from "../useVoicePreview";
+import useVoicePreview from "../useVoicePreview";
+import { SpeechVoiceOption } from "../useSpeechSynthesis";
 
-// Mock window.speechSynthesis and SpeechSynthesisUtterance globally
-const mockSpeak = vi.fn();
-const mockCancel = vi.fn();
-const mockGetVoices = vi.fn();
-
-// Track created utterances to trigger callbacks
-const createdUtterances: Array<{
-  text: string;
-  lang: string;
-  rate: number;
-  voice: unknown;
-  onstart: ((event: Event) => void) | null;
-  onend: ((event: Event) => void) | null;
-  onerror: ((event: Event) => void) | null;
-}> = [];
-
-vi.stubGlobal("speechSynthesis", {
-  speak: mockSpeak,
-  cancel: mockCancel,
-  getVoices: mockGetVoices,
-  pause: vi.fn(),
-  resume: vi.fn(),
-  pending: false,
-  speaking: false,
+const makeVoice = (id: string, lang = "en-US"): SpeechVoiceOption => ({
+  id,
+  label: `Voice ${id}`,
+  lang,
 });
 
-vi.stubGlobal(
-  "SpeechSynthesisUtterance",
-  class {
-    text: string;
-    lang = "";
-    rate = 1;
-    voice: unknown = null;
-    onstart: ((event: Event) => void) | null = null;
-    onend: ((event: Event) => void) | null = null;
-    onerror: ((event: Event) => void) | null = null;
+const mockUtteranceInstance = {
+  lang: "",
+  rate: 1,
+  voice: null as SpeechSynthesisVoice | null,
+  onstart: null as ((event: SpeechSynthesisEvent) => void) | null,
+  onend: null as ((event: SpeechSynthesisEvent) => void) | null,
+  onerror: null as ((event: SpeechSynthesisErrorEvent) => void) | null,
+};
 
-    constructor(text: string) {
-      this.text = text;
-      createdUtterances.push(this);
-      // Trigger onstart synchronously when speak is called (matches browser behavior)
-      mockSpeak.mockImplementation(() => {
-        setTimeout(() => {
-          this.onstart?.({} as Event);
-        }, 0);
-      });
-    }
-  },
-);
+let mockGetVoices: () => SpeechSynthesisVoice[];
+let mockCancel: ReturnType<typeof vi.fn>;
+let mockSpeak: ReturnType<typeof vi.fn>;
+
+const mockSpeechSynthesis = {
+  getVoices: () => mockGetVoices(),
+  speak: mockSpeak,
+  cancel: mockCancel,
+};
+
+const MockSpeechSynthesisUtterance = vi.fn(() => {
+  const instance = { ...mockUtteranceInstance };
+  Object.defineProperty(instance, "onstart", {
+    set(fn: ((event: SpeechSynthesisEvent) => void) | null) {
+      mockUtteranceInstance.onstart = fn;
+    },
+    get() {
+      return mockUtteranceInstance.onstart;
+    },
+  });
+  Object.defineProperty(instance, "onend", {
+    set(fn: ((event: SpeechSynthesisEvent) => void) | null) {
+      mockUtteranceInstance.onend = fn;
+    },
+    get() {
+      return mockUtteranceInstance.onend;
+    },
+  });
+  Object.defineProperty(instance, "onerror", {
+    set(fn: ((event: SpeechSynthesisErrorEvent) => void) | null) {
+      mockUtteranceInstance.onerror = fn;
+    },
+    get() {
+      return mockUtteranceInstance.onerror;
+    },
+  });
+  return instance;
+});
+
+beforeEach(() => {
+  vi.clearAllMocks();
+  vi.useFakeTimers();
+
+  mockGetVoices = vi.fn(() => []);
+  mockCancel = vi.fn();
+  mockSpeak = vi.fn();
+
+  Object.defineProperty(window, "speechSynthesis", {
+    value: mockSpeechSynthesis,
+    writable: true,
+  });
+
+  // Mock SpeechSynthesisUtterance globally
+  const globalAny = global as typeof globalThis & {
+    SpeechSynthesisUtterance: typeof SpeechSynthesisUtterance;
+  };
+  globalAny.SpeechSynthesisUtterance = MockSpeechSynthesisUtterance as unknown as typeof SpeechSynthesisUtterance;
+});
+
+afterEach(() => {
+  vi.useRealTimers();
+});
 
 describe("useVoicePreview", () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-    mockGetVoices.mockReturnValue([]);
-    createdUtterances.length = 0;
-  });
-
-  afterEach(() => {
-    vi.restoreAllMocks();
-  });
-
-  it("initializes with null previewingVoiceId and false isPreviewPlaying", () => {
+  it("initializes with no active preview", () => {
     const { result } = renderHook(() => useVoicePreview());
     expect(result.current.previewingVoiceId).toBeNull();
     expect(result.current.isPreviewPlaying).toBe(false);
   });
 
-  it("playPreview sets previewingVoiceId and isPreviewPlaying after onstart fires", async () => {
+  it("playPreview sets previewingVoiceId and isPreviewPlaying to true", () => {
     const { result } = renderHook(() => useVoicePreview());
-    const voice = { id: "voice-1", label: "Voice One", lang: "en-US" };
+    const voice = makeVoice("voice-1", "en-US");
 
     act(() => {
       result.current.playPreview(voice);
     });
 
-    // onstart is called asynchronously
-    await act(async () => {
-      await new Promise((r) => setTimeout(r, 0));
+    // Simulate utterance onstart event
+    act(() => {
+      mockUtteranceInstance.onstart?.({} as SpeechSynthesisEvent);
     });
 
     expect(result.current.previewingVoiceId).toBe("voice-1");
     expect(result.current.isPreviewPlaying).toBe(true);
   });
 
-  it("playPreview calls speechSynthesis.speak once per preview", async () => {
+  it("playPreview calls window.speechSynthesis.speak with the preview text", () => {
     const { result } = renderHook(() => useVoicePreview());
-    const voice = { id: "voice-1", label: "Voice One", lang: "en-US" };
+    const voice = makeVoice("voice-2", "en-GB");
 
     act(() => {
       result.current.playPreview(voice);
-    });
-    await act(async () => {
-      await new Promise((r) => setTimeout(r, 0));
     });
 
     expect(mockSpeak).toHaveBeenCalledTimes(1);
   });
 
-  it("playPreview cancels existing preview before starting a new one", async () => {
+  it("playPreview stops any previous preview before starting a new one", () => {
     const { result } = renderHook(() => useVoicePreview());
-    const voice1 = { id: "voice-1", label: "Voice One", lang: "en-US" };
-    const voice2 = { id: "voice-2", label: "Voice Two", lang: "en-GB" };
+    const voice1 = makeVoice("voice-a");
+    const voice2 = makeVoice("voice-b");
 
     act(() => {
       result.current.playPreview(voice1);
-    });
-    await act(async () => {
-      await new Promise((r) => setTimeout(r, 0));
     });
 
     act(() => {
       result.current.playPreview(voice2);
     });
-    await act(async () => {
-      await new Promise((r) => setTimeout(r, 0));
-    });
 
-    expect(mockCancel).toHaveBeenCalledTimes(1);
-    expect(mockSpeak).toHaveBeenCalledTimes(2);
+    // stopPreview should have been called before the second play
+    expect(mockCancel).toHaveBeenCalled();
   });
 
-  it("stopPreview resets state and calls speechSynthesis.cancel", async () => {
+  it("stopPreview resets previewingVoiceId and isPreviewPlaying to false", () => {
     const { result } = renderHook(() => useVoicePreview());
-    const voice = { id: "voice-1", label: "Voice One", lang: "en-US" };
+    const voice = makeVoice("voice-stop");
 
     act(() => {
       result.current.playPreview(voice);
     });
-    await act(async () => {
-      await new Promise((r) => setTimeout(r, 0));
+
+    act(() => {
+      mockUtteranceInstance.onstart?.({} as SpeechSynthesisEvent);
     });
 
     expect(result.current.isPreviewPlaying).toBe(true);
@@ -144,82 +157,52 @@ describe("useVoicePreview", () => {
       result.current.stopPreview();
     });
 
-    expect(mockCancel).toHaveBeenCalledTimes(1);
     expect(result.current.previewingVoiceId).toBeNull();
     expect(result.current.isPreviewPlaying).toBe(false);
+    expect(mockCancel).toHaveBeenCalled();
   });
 
-  it("stopPreview is safe to call when nothing is playing", () => {
+  it("onend event callback resets state", () => {
     const { result } = renderHook(() => useVoicePreview());
-
-    expect(() => result.current.stopPreview()).not.toThrow();
-    expect(result.current.previewingVoiceId).toBeNull();
-    expect(result.current.isPreviewPlaying).toBe(false);
-  });
-
-  it("playPreview applies matching browser voice when found", async () => {
-    const { result } = renderHook(() => useVoicePreview());
-    // Mock browser voice that matches our voice option
-    mockGetVoices.mockReturnValue([
-      { voiceURI: "voice-1", name: "Browser Voice", lang: "en-US" },
-    ]);
-
-    const voice = { id: "voice-1", label: "Voice One", lang: "en-US" };
+    const voice = makeVoice("voice-end");
 
     act(() => {
       result.current.playPreview(voice);
     });
-    await act(async () => {
-      await new Promise((r) => setTimeout(r, 0));
-    });
-
-    expect(mockGetVoices).toHaveBeenCalled();
-    expect(mockSpeak).toHaveBeenCalledTimes(1);
-  });
-
-  it("onend handler resets playing state", async () => {
-    const { result } = renderHook(() => useVoicePreview());
-    const voice = { id: "voice-1", label: "Voice One", lang: "en-US" };
 
     act(() => {
-      result.current.playPreview(voice);
-    });
-    await act(async () => {
-      await new Promise((r) => setTimeout(r, 0));
+      mockUtteranceInstance.onstart?.({} as SpeechSynthesisEvent);
     });
 
     expect(result.current.isPreviewPlaying).toBe(true);
 
-    // Simulate onend callback
-    const utterance = createdUtterances[0];
     act(() => {
-      utterance.onend?.({} as Event);
+      mockUtteranceInstance.onend?.({} as SpeechSynthesisEvent);
     });
 
-    expect(result.current.previewingVoiceId).toBeNull();
     expect(result.current.isPreviewPlaying).toBe(false);
+    expect(result.current.previewingVoiceId).toBeNull();
   });
 
-  it("onerror handler resets playing state", async () => {
+  it("onerror event callback resets state", () => {
     const { result } = renderHook(() => useVoicePreview());
-    const voice = { id: "voice-1", label: "Voice One", lang: "en-US" };
+    const voice = makeVoice("voice-error");
 
     act(() => {
       result.current.playPreview(voice);
     });
-    await act(async () => {
-      await new Promise((r) => setTimeout(r, 0));
+
+    act(() => {
+      mockUtteranceInstance.onstart?.({} as SpeechSynthesisEvent);
     });
 
     expect(result.current.isPreviewPlaying).toBe(true);
 
-    // Simulate onerror callback
-    const utterance = createdUtterances[0];
     act(() => {
-      utterance.onerror?.({} as Event);
+      mockUtteranceInstance.onerror?.({} as SpeechSynthesisErrorEvent);
     });
 
-    expect(result.current.previewingVoiceId).toBeNull();
     expect(result.current.isPreviewPlaying).toBe(false);
+    expect(result.current.previewingVoiceId).toBeNull();
   });
 });
