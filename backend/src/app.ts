@@ -14,6 +14,9 @@ import cookieParser from "cookie-parser";
 import config from "./config";
 import { Routers } from "./router";
 import globalErrorHandler from "./app/middleware/global.error.handler";
+import leaderboardRoute from "./routes/leaderboard.route";
+import globalRateLimiter from "./app/middleware/global.rate-limiter";
+import { sanitizeAllMiddleware } from "./app/middleware/sanitize.middleware";
 import ApiError from "./errors/api_error";
 
 const app: Application = express();
@@ -54,12 +57,32 @@ app.use(
   })
 );
 
+
+// Rate limiter — placed after CORS so OPTIONS preflight requests are
+// never counted against the limit before CORS has a chance to respond.
+app.use(globalRateLimiter);
+
+// ─── 1. FIXED: ENFORCED HARDENED PAYLOAD LIMITS TO PREVENT DoS ───
+app.use(express.json({ limit: "2mb" }));
+app.use(express.urlencoded({ extended: true, limit: "2mb" }));
+app.use(cookieParser());
+app.use(sanitizeAllMiddleware);
+
+// Legacy Route Rewrite Rewrite Rules
+app.use((req, res, next) => {
+  if (
+    req.method === "GET" &&
+    /^\/api\/story\/[a-f0-9]{24}\/character-network$/i.test(req.path)
+  ) {
+    req.url = req.url.replace(/^\/api\/story\//, "/api/v1/story/");
+  }
 // Payload limit set to 10mb to support large story content and
 // character network data without triggering 413 errors.
 // Previously used Express default (100kb) which was too restrictive.
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 app.use(cookieParser() as unknown as RequestHandler);
+
 
 app.use("/api/v1", Routers);
 
