@@ -6,7 +6,7 @@ const handleCastError = (err: mongoose.Error.CastError) => {
   const errors: IGenericErrorMessage[] = [
     {
       path: err.path,
-      message: `Invalid value '${err.value}' for field '${err.path}' — expected a valid ${err.kind}.`,
+      message: `Invalid value for ${err.path}: "${err.value}" is not a valid ID`,
     },
   ];
   return {
