@@ -9,6 +9,8 @@ interface RootLayoutProps {
   children: ReactNode;
 }
 
+const AUTH_PATHS = ["/login", "/signup", "/forgot-password"];
+
 const RootLayout: React.FC<RootLayoutProps> = ({ children }) => {
   const { pathname } = useLocation();
   const isAuthPage = pathname === "/login" || pathname === "/signup";
