@@ -39,8 +39,15 @@ import StoryComparisonDashboard from "../comparison/StoryComparisonDashboard";
 import StoryTimelineVisualization from "../timeline/StoryTimelineVisualization";
 import StoryRelationshipGraph from "../relationship-graph/StoryRelationshipGraph";
 import StoryPlotTwistGenerator from "../plot-twist/StoryPlotTwistGenerator";
-
-
+import StoryReadingAnalytics from "../analytics/StoryReadingAnalytics";
+import StoryRevisionHistory from "../revision-history/StoryRevisionHistory";
+import { createRevision } from "../../utils/storyRevisionHistory";
+import StoryEndingAnalyzer from "../ending-analyzer/StoryEndingAnalyzer";
+import WritingChallengeGenerator from "../writing-challenges/WritingChallengeGenerator";
+import StoryNamingAssistant from "../naming-assistant/StoryNamingAssistant";
+import StoryPublishingReadiness from "../publishing-readiness/StoryPublishingReadiness";
+import StoryTagGenerator from "../story-tags/StoryTagGenerator";
+import StoryReadingInfo from "../reading-info/StoryReadingInfo";
 import {
   getSafeFileName,
   downloadBlob,
@@ -480,6 +487,70 @@ const StoryWorkspace = () => {
   onApply={(twist) => {
     console.log("Selected plot twist:", twist);
   }}
+/>
+
+<StoryReadingAnalytics
+  story={
+    currentStory.chapters
+      ?.map((chapter) => chapter.content)
+      .join("\n\n") || ""
+  }
+/>
+
+<StoryRevisionHistory
+  revisions={[
+    createRevision(
+      currentStory.chapters
+        ?.map((chapter) => chapter.content)
+        .join("\n\n") || ""
+    ),
+  ]}
+  onRestore={(content) => {
+    console.log("Restore revision:", content);
+  }}
+/>
+
+<StoryEndingAnalyzer
+  story={
+    currentStory.chapters
+      ?.map((chapter) => chapter.content)
+      .join("\n\n") || ""
+  }
+  onRegenerate={(prompt) => {
+    console.log("Regenerate ending:", prompt);
+  }}
+/>
+
+<WritingChallengeGenerator />
+
+<StoryNamingAssistant
+  onInsert={(name) => {
+    console.log("Insert name:", name);
+  }}
+/>
+
+<StoryPublishingReadiness
+  story={
+    currentStory.chapters
+      ?.map((chapter) => chapter.content)
+      .join("\n\n") || ""
+  }
+/>
+
+<StoryTagGenerator
+  story={
+    currentStory.chapters
+      ?.map((chapter) => chapter.content)
+      .join("\n\n") || ""
+  }
+/>
+
+<StoryReadingInfo
+  story={
+    currentStory.chapters
+      ?.map((chapter) => chapter.content)
+      .join("\n\n") || ""
+  }
 />
 
   <StoryViewer
