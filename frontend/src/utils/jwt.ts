@@ -64,9 +64,10 @@ export const decodedToken = (token: string): CustomJwtPayload => {
     throw new Error("Token is missing a valid 'role' claim.");
   }
 
-  const validRoles = ["user", "admin", "super_admin", "writer", "guest"];
-  if (!validRoles.includes(decoded.role)) {
-    throw new Error(`Token 'role' claim must be one of: ${validRoles.join(", ")}`);
+  const VALID_ROLES = ["user", "admin", "super_admin", "writer", "guest"] as const;
+  if (!VALID_ROLES.includes(decoded.role as typeof VALID_ROLES[number])) {
+    console.warn(`Unrecognised token role: "${decoded.role}". Allowed: ${VALID_ROLES.join(", ")}`);
+    // Warn but do not throw — prevents valid tokens from being rejected if backend adds new roles.
   }
 
   // 4. Validate required subscriptionType claim
@@ -74,9 +75,10 @@ export const decodedToken = (token: string): CustomJwtPayload => {
     throw new Error("Token is missing a valid 'subscriptionType' claim.");
   }
 
-  const validSubscriptions = ["free", "pro", "premium"];
-  if (!validSubscriptions.includes(decoded.subscriptionType)) {
-    throw new Error(`Token 'subscriptionType' claim must be one of: ${validSubscriptions.join(", ")}`);
+  const VALID_SUBSCRIPTIONS = ["free", "pro", "premium"] as const;
+  if (!VALID_SUBSCRIPTIONS.includes(decoded.subscriptionType as typeof VALID_SUBSCRIPTIONS[number])) {
+    console.warn(`Unrecognised subscription type: "${decoded.subscriptionType}". Allowed: ${VALID_SUBSCRIPTIONS.join(", ")}`);
+    // Warn but do not throw — prevents valid tokens from being rejected if backend adds new plans.
   }
 
   // 5. Validate exp claim (must be a future timestamp in seconds)
