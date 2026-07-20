@@ -93,6 +93,15 @@ export const decodedToken = (token: string): CustomJwtPayload => {
     throw new Error("Token is missing a valid numeric 'iat' claim.");
   }
 
+  const now = Math.floor(Date.now() / 1000);
+  if (decoded.iat > now + CLOCK_SKEW_TOLERANCE_SECONDS) {
+    throw new Error("Token 'iat' claim is in the future. Token cannot be trusted.");
+  }
+
+  if (decoded.iat >= decoded.exp) {
+    throw new Error("Token 'iat' claim must be before 'exp' claim.");
+  }
+
   // 7. Validate optional name claim type if present
   if (decoded.name !== undefined && typeof decoded.name !== "string") {
     throw new Error("Token 'name' claim must be a string.");
