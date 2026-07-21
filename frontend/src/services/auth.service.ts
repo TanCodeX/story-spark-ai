@@ -92,6 +92,14 @@ export const getValidDecodedToken = () => {
 };
 
 export const storeUserInfo = ({ accessToken }: AccessToken) => {
+  try {
+    const decodedData = decodedToken(accessToken);
+    validateTokenPayload(decodedData as Record<string, unknown>);
+  } catch (error) {
+    console.error("Refusing to store invalid access token:", error);
+    throw new Error("Received an invalid access token. Please try logging in again.");
+  }
+
   const result = setToLocalStorage(AUTH_KEY, accessToken);
   emitAuthChange();
   return result;
