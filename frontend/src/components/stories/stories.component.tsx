@@ -486,7 +486,7 @@ const StoriesComponent = () => {
   const storiesPerPage = 10;
   const location = useLocation();
   const navigate = useNavigate();
-  const { register, handleSubmit, reset, setValue } = useForm<Inputs>();
+  const { register, handleSubmit, reset, setValue, formState : {isSubmitting} } = useForm<Inputs>();
 
 
   const sentenceMatches = content.match(/[^.!?]+[.!?]*\s*/g) ?? [content];
@@ -604,7 +604,7 @@ const StoriesViewComponent: React.FC<StoriesComponentProps> = ({
 }) => {
   const location = useLocation();
 const navigate = useNavigate();
-const { register, handleSubmit, reset, setValue } = useForm<Inputs>();
+const { register, handleSubmit, reset, setValue, formState : {isSubmitting} } = useForm<Inputs>();
   const [stories, setStories] = useState<IStories[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const { data } = useGetProfileInfoQuery(undefined);
@@ -2334,15 +2334,24 @@ onKeyDown={(e) => {
     <div className="flex justify-end mt-2 w-full">
       <button
         type="submit"
-        disabled={loading || isOverLimit}
+        disabled={isSubmitting || isOverLimit}
         className={`w-full sm:w-auto justify-center rounded-lg bg-gradient-to-r from-blue-400 to-indigo-500 text-gray-200 px-6 py-3 font-semibold ${
-          loading || isOverLimit
+          isSubmitting || isOverLimit
             ? "opacity-50 cursor-not-allowed"
-            : "hover:shadow-lg hover:shadow-indigo-500/50"
-        } transition-all duration-300 transform hover:scale-105 flex items-center space-x-2 group cursor-pointer`}
+            : "hover:shadow-lg hover:shadow-indigo-500/50 hover:scale-105"
+        } transition-all duration-300 transform flex items-center space-x-2 group cursor-pointer`}
       >
-        <i className="fas fa-wand-magic-sparkles text-xl transition-transform duration-300 group-hover:animate-wiggle"></i>
-        {loading ? "Generating..." : "Generate"}
+        {isSubmitting ? (
+          <>
+            <i className="fas fa-spinner fa-spin text-xl"></i>
+            <span>Generating...</span>
+          </>
+        ) : (
+          <>
+            <i className="fas fa-wand-magic-sparkles text-xl transition-transform duration-300 group-hover:animate-wiggle"></i>
+            <span>Generate</span>
+          </>
+        )}
       </button>
     </div>
   </form>
