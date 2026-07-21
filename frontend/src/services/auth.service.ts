@@ -54,7 +54,7 @@ const buildUserInfo = (decodedData: RawJwtPayload): AuthUserInfo => ({
   subscriptionType: decodedData?.subscriptionType || "free",
   exp: decodedData?.exp || 0,
   iat: decodedData?.iat || 0,
-  avatar: decodedData?.avatar || "",
+  avatar: decodedData?.avatar || undefined,
 });
 
 export const getValidDecodedToken = () => {
