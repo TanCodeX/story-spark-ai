@@ -3,7 +3,7 @@ import { Chapter } from "../../types/story.types";
 import ReadingTimeBadge from "../ReadingTimeBadge";
 import toast from "react-hot-toast";
 import jsPDF from "jspdf";
-import { AudioPlayer } from "../AudioPlayer";
+import AudioPlayer from "../AudioPlayer";
 import FloatingStoryProgressCard from "./FloatingStoryProgressCard";
 
 interface Props {
@@ -312,7 +312,7 @@ const StoryViewer: React.FC<Props> = ({ chapters, storyId, truncated }) => {
         {chapters.map((chapter, index) => (
           <div
             key={chapter.id}
-            ref={(el) => (chapterRefs.current[index] = el)}
+            ref={(el) => { chapterRefs.current[index] = el; }}
             className="mb-16"
           >
             <div className="flex items-center justify-between mb-6">

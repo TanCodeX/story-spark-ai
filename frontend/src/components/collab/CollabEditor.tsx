@@ -6,9 +6,7 @@ import { QuillBinding } from 'y-quill';
 import { IndexeddbPersistence } from 'y-indexeddb';
 import { Awareness } from 'y-protocols/awareness';
 import { io, Socket } from 'socket.io-client';
-import { Awareness } from 'y-protocols/awareness';
 import { resolveSocketUrl } from '../../helpers/socket-url';
-import { Awareness } from 'y-protocols/awareness';
 
 interface CollabEditorProps {
   storyId: string;
@@ -139,11 +137,11 @@ export default function CollabEditor({ storyId, userId, username, userColor }: C
         socket!.emit('awareness', awarenessUpdate);
       };
       awareness.on('update', ({ added, updated, removed }: any) => {
-        const awUpdate = awareness.encodeUpdate(added.concat(updated).concat(removed));
+        const awUpdate = (awareness as any).encodeUpdate(added.concat(updated).concat(removed));
         sendAwareness(awUpdate);
       });
       socket.on('awareness', (aw: Uint8Array) => {
-        awareness.applyUpdate(aw);
+        (awareness as any).applyUpdate(aw);
       });
     } else {
       console.warn(
@@ -153,8 +151,8 @@ export default function CollabEditor({ storyId, userId, username, userColor }: C
     }
 
     return () => {
-      ydoc.off('update', sendUpdate);
-      socket.disconnect();
+      ydoc.off('update', sendUpdate as any);
+      socket?.disconnect();
       awareness.off('update', renderRemoteCursors);
       awareness.destroy();
       binding.destroy();

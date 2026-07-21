@@ -250,7 +250,7 @@ const handleGenerateCharacterProfile = async () => {
         setStories([]);
         setSelectedStory(null);
       }
-    } catch (error) {
+    } catch (error: any) {
       const message = error?.data?.message || error?.message || "Something went wrong. Please try again.";
       toast.error(message);
     } finally {
