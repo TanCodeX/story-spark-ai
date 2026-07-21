@@ -1,4 +1,5 @@
 import { useEffect, useRef, useCallback, useState } from "react";
+import api from "../services/api";
 
 const DRAFT_KEY_PREFIX = "story_draft_";
 const AUTOSAVE_INTERVAL_MS = 30000;
@@ -12,12 +13,72 @@ interface DraftData {
   savedAt: string;
 }
 
-interface QueueItem {
+
+interface QueuedSave {
+
   draftId: string;
   title: string;
   content: string;
   timestamp: number;
 }
+
+
+export const offlineQueue: QueuedSave[] = [];
+let globalIsOnline = typeof navigator !== "undefined" ? navigator.onLine : true;
+
+// Single-flight guard: ensures only ONE flush of the shared offlineQueue is
+// ever in progress at a time, no matter how many useAutoSave instances have
+// an "online" listener attached at once. See issue #4870.
+let flushInProgress: Promise<void> | null = null;
+
+async function saveDraftToServer(item: Pick<QueuedSave, "draftId" | "title" | "content">) {
+  // PATCH /api/v1/story/:draftId/save — see backend/src/routes/story.routes.ts
+  await api.patch(`/story/${item.draftId}/save`, {
+    title: item.title,
+    content: item.content,
+  });
+}
+
+export async function flushOfflineQueue(queue: QueuedSave[]) {
+  for (const item of queue) {
+    await saveDraftToServer(item);
+  }
+}
+
+/**
+ * Drains and flushes the shared offlineQueue exactly once, even when called
+ * concurrently by multiple "online" listeners. Items are removed from the
+ * queue synchronously (via splice) before the network call, so a listener
+ * that fires a moment later sees an empty queue and does nothing. If the
+ * flush fails, items are put back so the next "online" event retries them.
+ */
+async function flushOfflineQueueOnce(
+  onStart: () => void,
+  onSuccess: () => void,
+  onError: (error: unknown) => void
+): Promise<void> {
+  if (flushInProgress) {
+    return flushInProgress;
+  }
+  if (offlineQueue.length === 0) return;
+
+  onStart();
+  flushInProgress = (async () => {
+    const itemsToFlush = offlineQueue.splice(0, offlineQueue.length);
+    try {
+      await flushOfflineQueue(itemsToFlush);
+      onSuccess();
+    } catch (error) {
+      // Put the unsent items back so a future "online" event retries them.
+      offlineQueue.unshift(...itemsToFlush);
+      onError(error);
+    }
+  })();
+
+  try {
+    await flushInProgress;
+  } finally {
+    flushInProgress = null;
 
 type AutoSaveEvent =
   | { type: "online" }
@@ -140,6 +201,7 @@ export async function flushOfflineQueue(queue: Array<QueueItem>) {
       queue.unshift(...pendingItems);
       throw new Error("Failed to save queued draft");
     }
+
   }
 }
 
@@ -160,12 +222,14 @@ export function useAutoSave(draftId: string, title: string, content: string) {
       const currentOnline = typeof navigator !== "undefined" ? navigator.onLine : true;
       if (!currentOnline) {
         offlineQueue.push({ draftId, title, content, timestamp: Date.now() });
+        setPendingCount(offlineQueue.length);
         updateQueueState();
         setLastSaved(new Date());
         setSaveStatus("saved");
         return;
       }
 
+      await saveDraftToServer({ draftId, title, content });
       const response = await fetch("/api/v1/stories/save", {
         method: "PUT",
         headers: {
@@ -178,6 +242,7 @@ export function useAutoSave(draftId: string, title: string, content: string) {
         throw new Error("Failed to save to server");
       }
 
+
       setLastSaved(new Date());
       setSaveStatus("saved");
     } catch {
@@ -186,6 +251,37 @@ export function useAutoSave(draftId: string, title: string, content: string) {
   }, [draftId, title, content]);
 
   useEffect(() => {
+    const handleOnline = () => {
+      setIsOnline(true);
+      globalIsOnline = true;
+      flushOfflineQueueOnce(
+        () => setSaveStatus("saving"),
+        () => {
+          setPendingCount(offlineQueue.length);
+          setLastSaved(new Date());
+          setSaveStatus("saved");
+        },
+        (error) => {
+          setPendingCount(offlineQueue.length);
+          setSaveStatus("error");
+          console.error("Failed to flush offline queue:", error);
+        }
+      );
+    };
+
+    const handleOffline = () => {
+      setIsOnline(false);
+      globalIsOnline = false;
+    };
+
+    window.addEventListener("online", handleOnline);
+    window.addEventListener("offline", handleOffline);
+
+    return () => {
+      window.removeEventListener("online", handleOnline);
+      window.removeEventListener("offline", handleOffline);
+    };
+
     const unsubscribe = registerAutoSaveListener((event) => {
       switch (event.type) {
         case "online":
@@ -216,6 +312,7 @@ export function useAutoSave(draftId: string, title: string, content: string) {
     });
 
     return unsubscribe;
+
   }, []);
 
   useEffect(() => {
