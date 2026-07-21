@@ -67,7 +67,7 @@ const SSInput = <T extends FieldValues>({
           autoComplete={autoComplete}
           autoFocus={autoFocus}
           {...register(name, validation)}
-        className={`w-full box-border max-w-full h-11 block rounded-xl border text-sm transition-all duration-200 ${
+        className={`w-full box-border max-w-full min-w-0 h-11 block rounded-xl border text-sm transition-all duration-200 ${
           icon ? "pl-10" : "px-4"
         } ${isPasswordType ? "pr-10" : "pr-4"} ${
           error
