@@ -1,8 +1,10 @@
 
-import React, { useCallback, useState, useEffect, useRef } from "react";
+import React, { useCallback, useState, useEffect, useRef, useMemo } from "react";
 import jsPDF from "jspdf";
-import StoriesViewComponent, { IStories } from "./stories.view.component";
+import StoriesViewComponent from "./stories.view.component";
 import { Link, useLocation, useNavigate } from "react-router-dom";
+import { useCreatePostMutation, useDeletePostMutation } from "../../redux/apis/post.api";
+import { useRecentPrompts } from "../../hooks/useRecentPrompts";
 import { getUserInfo, isLoggedIn } from "../../services/auth.service";
 import { getRequestLimit, getWordCount, prompts, STORY_TEMPLATES } from "./stories.utils";
 import {
@@ -413,13 +415,20 @@ const TonePicker: React.FC<TonePickerProps> = React.memo(({ selected, onChange }
   );
 });
 import AudioPlayer, { type AudioPlayerHandle, type NarrationPlaybackState } from "../AudioPlayer";
-import { useLocation } from "react-router-dom";
+
 import {
   useGenerateAlternateEndingsMutation,
   useGenerateFreeAlternateEndingsMutation,
 } from "../../redux/apis/ai.model.api";
 import ImageFallback from "../ImageFallback";
 import GeneratedStoryTimeline from "./GeneratedStoryTimeline";
+export interface ITopicData {
+  title: string;
+  className: string;
+  color: string;
+  selected: boolean;
+}
+
 export interface IStories {
   uuid: string;
   title: string;
@@ -536,6 +545,45 @@ const { register, handleSubmit, reset, setValue } = useForm<Inputs>();
   const [selectedPrompt, setSelectedPrompt] = useState<string>("");
   const [showHelpModal, setShowHelpModal] = useState(false);
 
+  const [selectedStory, setSelectedStory] = useState<IStories | null>(null);
+  const [selectTopics, setSelectTopics] = useState<ITopicData[]>([]);
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("");
+  const [searchFilter, setSearchFilter] = useState("all");
+  const [currentPage, setCurrentPage] = useState(1);
+  const storiesPerPage = 6;
+  const [topics, setTopics] = useState<{ title: string; className: string; color: string; selected: boolean }[]>([]);
+  const [newTopicTitle, setNewTopicTitle] = useState("");
+  const [characters, setCharacters] = useState<{ id: string; name: string; role: string; personality: string }[]>([]);
+
+  const handleAddCharacter = () => {
+    setCharacters([...characters, { id: crypto.randomUUID(), name: "", role: "", personality: "" }]);
+  };
+  const handleRemoveCharacter = (id: string) => {
+    setCharacters(characters.filter((c) => c.id !== id));
+  };
+  const handleCharacterChange = (id: string, field: string, value: string) => {
+    const updated = characters.map(c => c.id === id ? { ...c, [field]: value } : c);
+    setCharacters(updated);
+  };
+
+  const handleClearPrompt = () => {
+    setSelectedPrompt("");
+    setValue("prompt", "");
+  };
+  const onPublishSuccess = () => {};
+  const isDangerLimit = false;
+  const logo = "/logo.png";
+  const isLoading = loading;
+
+  const buildSentenceSegments = (text: string) => text.match(/[^.!?]+[.!?]+/g) || [text];
+  const handleCancelGeneration = (skipConfirm?: boolean) => {};
+  const setIsHighLatency = (v: boolean) => {};
+  const DRAFT_KEY = "story_draft";
+  const setDraftStatus = (status: string) => {};
+  const setCurrentStep = (step: number) => {};
+  const SELECTED_TOPIC_CLASSES = "";
+
+
 const [isDropdownOpen, setIsDropdownOpen] = useState<boolean>(false);
 const { data: rosterData } = useGetCharactersQuery(undefined, { skip: !login });
 const rosterCharacters = rosterData?.data || [];
@@ -603,11 +651,13 @@ const [selectedGenre, setSelectedGenre] = useState<string>(
 );
 
   const [selectedLength, setSelectedLength] = useState<string>(draft?.length || "medium");
-  const [selectedTone, setSelectedTone] = useState<ToneLabel | "">(draft?.tone || "Dramatic");
+  const [selectedTone, setSelectedTone] = useState<ToneLabel | "">((draft?.tone as ToneLabel) || "Dramatic");
   const [selectedAudience, setSelectedAudience] = useState<string>("General Audience");
   const [textareaValue, setTextareaValue] = useState<string>(() => {
     return location.state?.prompt || draft?.prompt || "";
   });
+  const debouncedPrompt = useDebounce(textareaValue, 1000);
+  const [generatedEndings, setGeneratedEndings] = useState<Record<string, { style: string; ending: string; fullStory: string; }[]>>({});
 
   const [showTemplateScreen, setShowTemplateScreen] = useState<boolean>(() => {
     return !location.state?.prompt && !draft?.prompt;
@@ -659,7 +709,7 @@ const [selectedGenre, setSelectedGenre] = useState<string>(
   const [, setShowRemix] = useState<boolean>(false);
   const [createPost] = useCreatePostMutation();
   const [deletePost] = useDeletePostMutation();
-  const { data: profile } = useGetProfileInfoQuery(undefined, { skip: !isLogin });
+  const { data: profile } = useGetProfileInfoQuery(undefined, { skip: !login });
   const lastSavedContentRef = useRef<string>("");
   const isSavingRef = useRef<boolean>(false);
   const hasSavedSessionRef = useRef<boolean>(false);
@@ -732,7 +782,7 @@ const [selectedGenre, setSelectedGenre] = useState<string>(
 
       };
       
-      const generationRequest = isLogin
+      const generationRequest = login
         ? generateAlternateEndings(payload)
         : generateFreeAlternateEndings(payload);
         
@@ -866,7 +916,7 @@ const [selectedGenre, setSelectedGenre] = useState<string>(
   useEffect(() => {
     const autoSaveStory = async () => {
       // 1. Prevent guest auto-save requests
-      if (!isLogin || !selectedStory) return;
+      if (!login || !selectedStory) return;
 
       // 2. Prevent duplicate auto-save requests for unchanged story content
       if (selectedStory.content === lastSavedContentRef.current) {
@@ -909,7 +959,7 @@ const [selectedGenre, setSelectedGenre] = useState<string>(
     }, 1000);
 
     return () => clearTimeout(timer);
-  }, [selectedStory, selectedStory?.content, isLogin, selectTopics, createPost]);
+  }, [selectedStory, selectedStory?.content, login, selectTopics, createPost]);
 
 useEffect(() => {
   if (location.state && location.state.prompt) {
@@ -1320,7 +1370,7 @@ const handleExportMarkdown = () => {
       const title = selectedStory.title || "Story";
       const content = selectedStory.content || "";
       const tag = selectedStory.tag || "General";
-      const authorName = isLogin && profile?.name ? profile.name : "Anonymous";
+      const authorName = login && profile?.name ? profile.name : "Anonymous";
       const isoDate = new Date().toISOString().split("T")[0];
       const markdownContent = `---\ntitle: "${title.replace(/"/g, '\\"')}"\ntag: "${tag.replace(/"/g, '\\"')}"\nauthor: "${authorName.replace(/"/g, '\\"')}"\ndate: "${isoDate}"\n---\n\n# ${title}\n\n${content}\n`;
       const blob = new Blob([markdownContent], { type: "text/markdown;charset=utf-8;" });
@@ -1353,7 +1403,7 @@ const handleExportMarkdown = () => {
   });
 
   const handelPublishStory = useCallback(async () => {
-    if (!isLogin) {
+    if (!login) {
       toast.error("Please login to publish the story.");
       return;
     }
@@ -1382,7 +1432,7 @@ const handleExportMarkdown = () => {
     } finally {
       setLoading(false);
     }
-  }, [isLogin, selectedStory, selectTopics, createPost, setStories, setSelectedStory, onPublishSuccess]);
+  }, [login, selectedStory, selectTopics, createPost, setStories, setSelectedStory, onPublishSuccess]);
 
 
 
@@ -1393,7 +1443,7 @@ const handleExportMarkdown = () => {
     if (!debouncedSearchQuery.trim()) return uniqueStories;
     const query = debouncedSearchQuery.toLowerCase();
     
-    return uniqueStories.filter((story) => {
+    return uniqueStories.filter((story: IStories) => {
       switch (searchFilter) {
         case "title":
           return story.title?.toLowerCase().includes(query);
@@ -1660,7 +1710,7 @@ const handleExportMarkdown = () => {
                       <div className="flex flex-wrap gap-2">
                         {selectedStory ? (
                           <>
-                            {topics.map((topic, index) => (
+                            {topics.map((topic: { title: string; className: string; color: string; selected: boolean }, index: number) => (
                               <span
                                 key={index}
                                 className={`inline-flex items-center gap-2 px-4 py-1.5 ${topic.className} rounded-full text-sm font-medium transition-transform hover:scale-105 shadow-sm`}
@@ -1830,7 +1880,7 @@ const handleExportMarkdown = () => {
                       </p>
                     </div>
 
-                    {characters.map((char, index) => (
+                    {characters.map((char: { id: string; name: string; role: string; personality: string }, index: number) => (
                       <div
                         key={char.id}
                         className="p-4 bg-slate-50 dark:bg-slate-950/40 border border-slate-200 dark:border-white/5 rounded-2xl space-y-4 relative"
@@ -1849,7 +1899,7 @@ const handleExportMarkdown = () => {
                                   }}
                                 >
                                   <option value="">Load from Roster...</option>
-                                  {rosterCharacters.map((rc: { _id: string; name: string; role: string; }) => (
+                                  {rosterCharacters.map((rc: { _id: string; name: string; role?: string; }) => (
                                     <option key={rc._id} value={rc._id}>{rc.name} ({rc.role})</option>
                                   ))}
                                 </select>
@@ -2230,7 +2280,7 @@ const handleExportMarkdown = () => {
       {totalPages > 1 && (
         <div className="flex justify-center items-center gap-4 mt-6">
           <button
-            onClick={() => setCurrentPage((p) => p - 1)}
+            onClick={() => setCurrentPage((p: number) => p - 1)}
             disabled={currentPage === 1}
             className="px-4 py-2 rounded bg-slate-700 text-white disabled:opacity-50"
           >
@@ -2242,7 +2292,7 @@ const handleExportMarkdown = () => {
           </span>
 
           <button
-            onClick={() => setCurrentPage((p) => p + 1)}
+            onClick={() => setCurrentPage((p: number) => p + 1)}
             disabled={currentPage === totalPages}
             className="px-4 py-2 rounded bg-slate-700 text-white disabled:opacity-50"
           >

@@ -8,6 +8,13 @@ import { Awareness } from 'y-protocols/awareness';
 import { io, Socket } from 'socket.io-client';
 import { resolveSocketUrl } from '../../helpers/socket-url';
 
+export interface AwarenessUpdateEvent {
+  added: number[];
+  updated: number[];
+  removed: number[];
+}
+
+
 interface CollabEditorProps {
   storyId: string;
   userId: string;
@@ -102,7 +109,7 @@ export default function CollabEditor({ storyId, userId, username, userColor }: C
     // The editor still works locally via Yjs + IndexedDB persistence.
     const socketUrl = resolveSocketUrl();
     let socket: Socket | null = null;
-    let sendUpdate: ((update: Uint8Array) => void) | null = null;
+    let sendUpdate: ((update: Uint8Array, origin: unknown, doc: Y.Doc, tr: Y.Transaction) => void) | null = null;
 
     if (socketUrl) {
       socket = io(`${socketUrl}/yjs`, {
@@ -127,7 +134,7 @@ export default function CollabEditor({ storyId, userId, username, userColor }: C
       });
 
       // Broadcast local updates
-      sendUpdate = (update: Uint8Array, _origin: unknown, _doc: Y.Doc) => {
+      sendUpdate = (update: Uint8Array, _origin: unknown, _doc: Y.Doc, _tr: Y.Transaction) => {
         socket!.emit('update', update);
       };
       ydoc.on('update', sendUpdate);
@@ -151,7 +158,7 @@ export default function CollabEditor({ storyId, userId, username, userColor }: C
     }
 
     return () => {
-      ydoc.off('update', sendUpdate);
+      if (sendUpdate) { ydoc.off('update', sendUpdate); }
       socket?.disconnect();
       awareness.off('update', renderRemoteCursors);
       awareness.destroy();
