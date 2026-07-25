@@ -7,6 +7,7 @@ import { useCreatePostMutation } from "../../redux/apis/post.api";
 import { useRecentPrompts } from "../../hooks/useRecentPrompts";
 import { getUserInfo, isLoggedIn } from "../../services/auth.service";
 import { getRequestLimit, getWordCount, prompts, STORY_TEMPLATES } from "./stories.utils";
+import CharacterPortrait from "../character-portrait/CharacterPortrait";
 import {
   useGenerateFreeModelMutation,
   useGenerateModelMutation,
@@ -468,6 +469,83 @@ const getUniqueStories = (storyList: IStories[]) => {
     return true;
   });
 };
+// ---------------------------------------------------------------------------
+// Main StoriesComponent
+// ---------------------------------------------------------------------------
+const StoriesComponent = () => {
+  const [currentPage, setCurrentPage] = useState(1);
+  const storiesPerPage = 10;
+  const location = useLocation();
+  const navigate = useNavigate();
+  const { register, handleSubmit, reset, setValue, formState : {isSubmitting} } = useForm<Inputs>();
+
+
+  const sentenceMatches = content.match(/[^.!?]+[.!?]*\s*/g) ?? [content];
+  const segments: StorySentenceSegment[] = [];
+  let wordCursor = 0;
+
+  sentenceMatches.forEach((sentence, index) => {
+    const trimmedSentence = sentence.trim();
+    if (!trimmedSentence) {
+      return;
+    }
+
+
+  const [stories, setStories] = useState<IStories[]>(
+    draft?.stories?.length ? getUniqueStories(draft.stories) : [{ uuid: "test-1", title: "The Wizard's Journey", content: "Merlin walked through the forest toward the castle. The village was far behind him. He crossed the bridge over the river and entered the dungeon beneath the tower. Dragons guarded the mountain beyond the valley. Elena watched from the palace window as Merlin approached the cave near the ocean shore.", tag: "Fantasy", imageURL: "" }]
+  );
+
+  const [loading, setLoading] = useState<boolean>(false);
+  const [searchQuery, setSearchQuery] = useState<string>("");
+  const [searchFilter, setSearchFilter] = useState<string>("all");
+
+  const uniqueStories = useMemo(() => getUniqueStories(stories), [stories]);
+
+  const filteredStories = useMemo(() => {
+    if (!searchQuery.trim()) return uniqueStories;
+
+    const query = searchQuery.toLowerCase();
+
+    return uniqueStories.filter((story) => {
+      switch (searchFilter) {
+        case "title":
+          return story.title?.toLowerCase().includes(query);
+        case "content":
+          return story.content?.toLowerCase().includes(query);
+        case "genre":
+          return story.tag?.toLowerCase().includes(query);
+        case "all":
+        default:
+          return (
+            story.title?.toLowerCase().includes(query) ||
+            story.content?.toLowerCase().includes(query) ||
+            story.tag?.toLowerCase().includes(query)
+          );
+      }
+    });
+  }, [uniqueStories, searchQuery, searchFilter]);
+  const indexOfLastStory = currentPage * storiesPerPage;
+  const indexOfFirstStory = indexOfLastStory - storiesPerPage;
+
+  const currentStories = filteredStories.slice(
+    indexOfFirstStory,
+    indexOfLastStory
+  );
+
+  const totalPages = Math.ceil(
+    filteredStories.length / storiesPerPage
+  );
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, searchFilter]);
+
+
+
+    wordCursor += wordsInSentence;
+  });
+
+  return segments;
+};
 
 interface ICharacter {
   id: string;
@@ -511,7 +589,7 @@ const TemplateSelectionScreen: React.FC<{
 const StoriesComponent = () => {
   const location = useLocation();
 const navigate = useNavigate();
-const { register, handleSubmit, reset, setValue } = useForm<Inputs>();
+const { register, handleSubmit, reset, setValue, formState : {isSubmitting} } = useForm<Inputs>();
   const [stories, setStories] = useState<IStories[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const { data } = useGetProfileInfoQuery(undefined);
@@ -570,6 +648,11 @@ const [isDropdownOpen, setIsDropdownOpen] = useState<boolean>(false);
 const { data: rosterData } = useGetCharactersQuery(undefined, { skip: !login });
 const rosterCharacters = rosterData?.data || [];
 const [saveCharacter, { isLoading: isSavingCharacter }] = useSaveCharacterMutation();
+const [selectedRosterCharacterId, setSelectedRosterCharacterId] =
+  useState<string>("");
+const selectedRosterCharacter = rosterCharacters.find(
+  (character) => character._id === selectedRosterCharacterId
+);
 
 const handleSaveToRoster = async (char: ICharacter) => {
   try {
@@ -586,11 +669,31 @@ const handleSaveToRoster = async (char: ICharacter) => {
 
 const handleLoadFromRoster = (charId: string, rosterCharId: string) => {
   const rosterChar = rosterCharacters.find((c: { _id?: string }) => c._id === rosterCharId);
+const handleLoadFromRoster = (
+  charId: string,
+  rosterCharId: string
+) => {
+  const rosterChar = rosterCharacters.find(
+    (character) => character._id === rosterCharId
+  );
+
   if (!rosterChar) return;
-  // Use a direct DOM update or form update depending on how characters are managed,
-  // Assuming setCharacters is available globally or we simulate the change:
-  if (typeof setCharacters === 'function') {
-    setCharacters((prev: ICharacter[]) => prev.map(c => c.id === charId ? { ...c, name: rosterChar.name, role: rosterChar.role || "", personality: rosterChar.personality } : c));
+
+  setSelectedRosterCharacterId(rosterCharId);
+
+  if (typeof setCharacters === "function") {
+    setCharacters((prev: ICharacter[]) =>
+      prev.map((character) =>
+        character.id === charId
+          ? {
+              ...character,
+              name: rosterChar.name,
+              role: rosterChar.role || "",
+              personality: rosterChar.personality,
+            }
+          : character
+      )
+    );
   }
 };
 const dropdownRef = useRef<HTMLDivElement>(null);
@@ -1859,6 +1962,147 @@ const handleExportMarkdown = () => {
                         Define custom characters to ensure Gemini maintains character roles, personality traits, and dynamic relationships consistently throughout the story.
                       </p>
                     </div>
+            {/* Alternate Endings Section */}
+            {selectedStory && (
+              <div className="bg-slate-800/60 backdrop-blur-xl border border-slate-700/50 rounded-2xl shadow-xl p-6 mt-8 relative overflow-hidden">
+                <div className="absolute top-[-50px] right-[-50px] w-48 h-48 bg-purple-500/5 rounded-full blur-3xl pointer-events-none"></div>
+                
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+                  <div>
+                    <h3 className="text-xl font-bold text-slate-200 flex items-center gap-2">
+                      Alternate Endings
+                    </h3>
+                    <p className="text-xs text-slate-400 mt-1">
+                      Explore alternate narrative styles for your story context.
+                    </p>
+                  </div>
+                  {selectedStory.content !== originalStoryContent[selectedStory.uuid] && (
+                    <button
+                      type="button"
+                      onClick={handleResetEnding}
+                      className="rounded-lg px-4 py-2 bg-red-950/40 hover:bg-red-900/60 text-red-200 border border-red-700/50 font-semibold text-sm transition-all active:scale-95 cursor-pointer flex items-center gap-1.5"
+                    >
+                      <i className="fa-solid fa-rotate-left"></i> Reset to Original
+                    </button>
+                  )}
+                </div>
+
+                  <div className="space-y-2 select-none">
+                    <h2 className="text-lg font-bold text-slate-900 dark:text-white tracking-tight">
+                      Cast of Characters
+                    </h2>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                      Define custom characters to ensure Gemini maintains character roles, personality traits, and dynamic relationships consistently throughout the story.
+                    </p>
+                  </div>
+
+                  {login && selectedRosterCharacter && (
+                    <div className="mt-4 mb-4 rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-900">
+                      <div className="mb-3">
+                        <h4 className="text-sm font-semibold text-slate-800 dark:text-slate-100">
+                          Character Portrait
+                        </h4>
+                        <p className="text-xs text-slate-500 dark:text-slate-400">
+                          Generate an AI portrait from the saved character&apos;s profile.
+                        </p>
+                      </div>
+
+                      <CharacterPortrait character={selectedRosterCharacter} />
+                    </div>
+                  )}
+
+                    <div className="flex items-center justify-between mt-1 px-1">
+                      {isOverLimit ? (
+                        <p className="text-xs text-red-400 flex items-center gap-1">
+                          <span>ΓÜá∩╕Å</span> {text.characterLimit}
+                        </p>
+                      ) : isNearLimit ? (
+                        <p className="text-xs text-yellow-400 flex items-center gap-1">
+                          <span>ΓÜá∩╕Å</span>{" "}
+                          {MAX_PROMPT_LENGTH - textareaValue.length} {text.charactersRemaining}
+                        </p>
+                      ) : (
+                        <span />
+                      )}
+
+                      <span
+                        className={`text-xs tabular-nums ml-auto ${isOverLimit
+                            ? "text-red-400 font-medium"
+                            : isNearLimit
+                              ? "text-yellow-400"
+                              : "text-gray-500"
+                          }`}
+                      >
+                        {textareaValue.length} / {MAX_PROMPT_LENGTH}
+                      </span>
+
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      {characters.map((char, index) => (
+                        <div
+                          key={char.id}
+                          className="p-4 bg-slate-50 dark:bg-slate-950/40 border border-slate-200 dark:border-white/5 rounded-2xl space-y-4 relative"
+                        >
+                          <div className="flex items-center justify-between select-none">
+                            <span className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                              ≡ƒæñ Character #{index + 1}
+                            </span>
+                            <div className="flex gap-2">
+                              {login && (
+                                <>
+                                  <select
+                                    className="text-xs bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded px-2"
+                                    onChange={(e) => {
+                                      const rosterCharId = e.target.value;
+
+                                      if (rosterCharId) {
+                                        handleLoadFromRoster(char.id, rosterCharId);
+                                      }
+                                    }}
+                                  >
+                                    <option value="">Load from Roster...</option>
+
+                                    {rosterCharacters.map((rosterCharacter) => (
+                                      <option
+                                        key={rosterCharacter._id}
+                                        value={rosterCharacter._id}
+                                      >
+                                        {rosterCharacter.name} ({rosterCharacter.role || "Character"})
+                                      </option>
+                                    ))}
+                                  </select>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleSaveToRoster(char)}
+                                    disabled={isSavingCharacter}
+                                    className="text-xs font-bold text-indigo-500 hover:text-indigo-600 dark:text-indigo-400 cursor-pointer"
+                                  >
+                                    Save
+                                  </button>
+                                </>
+                              )}
+                              <button
+                                type="button"
+                                onClick={() => handleRemoveCharacter(char.id)}
+                                className="text-xs font-bold text-red-500 hover:text-red-600 dark:text-red-400 dark:hover:text-red-300 hover:underline cursor-pointer"
+                              >
+                                Remove
+                              </button>
+                            </div>
+                          </div>
+
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="space-y-1.5">
+                              <label className="text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">Name</label>
+                              <input
+                                type="text"
+                                value={char.name}
+                                onChange={(e) => handleCharacterChange(char.id, "name", e.target.value)}
+                                placeholder="e.g. Leo, Sir Cedric, Bella"
+                                className="w-full px-3 py-2 text-xs sm:text-sm bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-xl outline-none focus:border-blue-500/40 text-slate-800 dark:text-slate-200 placeholder:text-slate-400 placeholder:italic"
+                              />
+                            </div>
 
                     {characters.map((char: { id: string; name: string; role: string; personality: string }, index: number) => (
                       <div
@@ -1872,15 +2116,27 @@ const handleExportMarkdown = () => {
                           <div className="flex gap-2">
                             {login && (
                               <>
-                                <select 
+                                <select
                                   className="text-xs bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded px-2"
                                   onChange={(e) => {
-                                    if (e.target.value) handleLoadFromRoster(char.id, e.target.value);
+                                    const rosterCharId = e.target.value;
+
+                                    if (rosterCharId) {
+                                      handleLoadFromRoster(char.id, rosterCharId);
+                                    }
                                   }}
                                 >
                                   <option value="">Load from Roster...</option>
                                   {rosterCharacters.map((rc: { _id: string; name: string; role?: string; }) => (
                                     <option key={rc._id} value={rc._id}>{rc.name} ({rc.role})</option>
+
+                                  {rosterCharacters.map((rosterCharacter) => (
+                                    <option
+                                      key={rosterCharacter._id}
+                                      value={rosterCharacter._id}
+                                    >
+                                      {rosterCharacter.name} ({rosterCharacter.role || "Character"})
+                                    </option>
                                   ))}
                                 </select>
                                 <button
@@ -1902,6 +2158,211 @@ const handleExportMarkdown = () => {
                             </button>
                           </div>
                         </div>
+
+    <div className="flex flex-wrap items-center gap-2 mb-3">
+      <span className="text-xs text-gray-400 mr-1">≡ƒôÅ Length:</span>
+
+      {lengths.map((length) => (
+        <button
+          key={length}
+          type="button"
+          onClick={() => setSelectedLength(length)}
+          className={`px-3 py-1 rounded-full text-xs font-medium transition-all duration-200 ${
+            selectedLength === length
+              ? "bg-indigo-500 text-white shadow-lg shadow-indigo-500/30"
+              : "bg-white/10 text-gray-400 hover:bg-white/20 hover:text-gray-200"
+          }`}
+        >
+          {length.charAt(0).toUpperCase() + length.slice(1)}
+        </button>
+      ))}
+    </div>
+
+    <div className="flex flex-wrap items-center gap-2 mb-3">
+      <span className="text-xs text-gray-400 mr-1">👥 Audience:</span>
+      {["Children (5-10)", "Young Adult (12-18)", "General Audience", "Professionals"].map((audience) => (
+        <button
+          key={audience}
+          type="button"
+          onClick={() => setSelectedAudience(audience)}
+          className={`px-3 py-1 rounded-full text-xs font-medium transition-all duration-200 ${
+            selectedAudience === audience
+              ? "bg-indigo-500 text-white shadow-lg shadow-indigo-500/30"
+              : "bg-white/10 text-gray-400 hover:bg-white/20 hover:text-gray-200"
+          }`}
+        >
+          {audience}
+        </button>
+      ))}
+    </div>
+
+    <div className="relative">
+      <textarea
+  {...register("prompt")}
+  ref={(el) => {
+    register("prompt").ref(el);
+    inputRef.current = el;
+  }}
+        className={`w-full h-32 sm:h-40 resize-none border-none outline-none bg-transparent text-gray-300 focus:ring-0 text-lg leading-relaxed tracking-wide placeholder:italic placeholder:text-gray-500 pr-10 transition-colors duration-200 ${
+          isOverLimit
+            ? "ring-1 ring-red-500 rounded"
+            : isNearLimit
+            ? "ring-1 ring-yellow-400 rounded"
+            : ""
+        }`}
+        placeholder="Every great story begins with a single idea. What's yours?"
+        value={textareaValue}
+        maxLength={MAX_PROMPT_LENGTH}
+        onChange={(e) => setTextareaValue(e.target.value)}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" && !e.shiftKey) {
+            e.preventDefault();
+            const form = e.currentTarget.closest("form");
+            if (form) form.requestSubmit();
+          }
+        }}      
+        />
+
+      {textareaValue.length > 0 && (
+        <button
+          type="button"
+          onClick={handleClearPrompt}
+          className="absolute right-2 top-2 text-gray-400 hover:text-red-500 transition-colors duration-200"
+          aria-label="Clear prompt"
+          title="Clear prompt"
+        >
+          <svg
+            className="w-5 h-5"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M6 18L18 6M6 6l12 12"
+            />
+          </svg>
+        </button>
+      )}
+
+      <div className="flex items-center justify-between mt-1 px-1">
+        {isOverLimit ? (
+          <p className="text-xs text-red-400 flex items-center gap-1">
+            <span>ΓÜá</span> Character limit reached ΓÇö generate is disabled
+          </p>
+        ) : isNearLimit ? (
+          <p className="text-xs text-yellow-400 flex items-center gap-1">
+            <span>ΓÜá</span>{" "}
+            {MAX_PROMPT_LENGTH - textareaValue.length} characters remaining
+          </p>
+        ) : (
+          <span />
+        )}
+
+        <span
+          className={`text-xs tabular-nums ml-auto ${
+            isOverLimit
+              ? "text-red-400 font-medium"
+              : isNearLimit
+              ? "text-yellow-400"
+              : "text-gray-500"
+          }`}
+        >
+          {textareaValue.length} / {MAX_PROMPT_LENGTH}
+        </span>
+      </div>
+    </div>
+
+    <p className="text-xs text-gray-500 mt-1 px-1">
+      ≡ƒÆí  <span className="font-medium">Keyboard tip:</span> Press{" "}
+      <kbd className="px-1 py-0.5 text-xs bg-gray-700 rounded border border-gray-600">
+        Enter
+      </kbd>{" "}
+      to generate &bull;{" "}
+      <kbd className="px-1 py-0.5 text-xs bg-gray-700 rounded border border-gray-600">
+        Ctrl + Enter
+      </kbd>{" "}
+      also works &bull;{" "}
+      <kbd className="px-1 py-0.5 text-xs bg-gray-700 rounded border border-gray-600">
+        Shift + Enter
+      </kbd>{" "}
+      for new line
+    </p>
+
+    <div className="flex justify-end mt-2 w-full">
+      <button
+        type="submit"
+        disabled={isSubmitting || isOverLimit}
+        className={`w-full sm:w-auto justify-center rounded-lg bg-gradient-to-r from-blue-400 to-indigo-500 text-gray-200 px-6 py-3 font-semibold ${
+          isSubmitting || isOverLimit
+            ? "opacity-50 cursor-not-allowed"
+            : "hover:shadow-lg hover:shadow-indigo-500/50 hover:scale-105"
+        } transition-all duration-300 transform flex items-center space-x-2 group cursor-pointer`}
+      >
+        {isSubmitting ? (
+          <>
+            <i className="fas fa-spinner fa-spin text-xl"></i>
+            <span>Generating...</span>
+          </>
+        ) : (
+          <>
+            <i className="fas fa-wand-magic-sparkles text-xl transition-transform duration-300 group-hover:animate-wiggle"></i>
+            <span>Generate</span>
+          </>
+        )}
+      </button>
+    </div>
+  </form>
+</div>
+            </div>
+
+            <div className="w-full max-w-2xl m-auto mt-4">
+  <h1 className="text-sm text-gray-500 mb-1">
+    Here are some example prompts you can refer to:-
+  </h1>
+
+  <div className="relative" ref={dropdownRef}>
+    <button
+      type="button"
+      onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+      className="w-full p-3 bg-slate-800 text-gray-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/50 flex items-center justify-between text-sm text-left transition-all duration-200"
+    >
+      <span className="truncate pr-4">
+        {selectedPrompt || "Select a prompt"}
+      </span>
+
+      <span
+        className={`text-gray-300 transition-transform duration-200 ${
+          isDropdownOpen ? "rotate-180" : ""
+        }`}
+      >
+        Γû╝
+      </span>
+    </button>
+
+    {isDropdownOpen && (
+      <ul className="absolute z-10 w-full mt-1 max-h-60 overflow-y-auto bg-slate-800 border border-slate-700/50 rounded-lg shadow-xl focus:outline-none divide-y divide-slate-700/30">
+        {prompts.map((item) => (
+          <li key={item.id}>
+            <button
+              type="button"
+              onClick={() => {
+                setSelectedPrompt(item.prompt);
+                setTextareaValue(item.prompt);
+                setIsDropdownOpen(false);
+              }}
+              className="w-full text-left px-4 py-3 text-sm text-gray-400 hover:bg-indigo-600 hover:text-white transition-colors duration-150 whitespace-normal break-words leading-relaxed"
+            >
+              {item.prompt}
+            </button>
+          </li>
+        ))}
+      </ul>
+    )}
+  </div>
+</div>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                           <div className="space-y-1.5">
